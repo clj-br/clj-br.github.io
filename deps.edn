@@ -1,0 +1,7 @@
+{:paths   ["src"]
+ :deps    {io.pedestal/pedestal.service {:mvn/version "0.5.9"}
+           io.pedestal/pedestal.jetty   {:mvn/version "0.5.9"}
+           hiccup/hiccup                {:mvn/version "2.0.0-alpha2"}}
+
+ :aliases {:run {:main-opts ["--report" "stderr"
+                             "-e" "((requiring-resolve,'clj-br.website))"]}}}
