@@ -107,7 +107,7 @@ let doThing = () => {
   (rdom/render js/window.loop_component (.getElementById js/document \"playground\"))
   `)
   } catch {
-  
+
   }
   setTimeout(() => doThing(), 1000)
 }
