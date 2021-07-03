@@ -3,8 +3,21 @@
             [hiccup2.core :as h]
             [io.pedestal.http.route :as route]
             [ring.util.mime-type :as mime]
-            [clojure.pprint :as pp])
-  (:import (java.nio.charset StandardCharsets)))
+            [clojure.pprint :as pp]
+            [clojure.string :as string]
+            [io.pedestal.interceptor :as interceptor]
+            [clojure.java.io :as io])
+  (:import (java.nio.charset StandardCharsets)
+           (java.io File)))
+
+(set! *warn-on-reflection* true)
+
+(defmacro scittle!
+  [& forms]
+  (let [pp-forms (for [form forms]
+                   (list `pp/pprint (list 'quote form)))
+        out-forms (cons `with-out-str pp-forms)]
+    `(h/raw ~out-forms)))
 
 (def links
   [{:titulo "Grupo no Telegram"
@@ -14,6 +27,36 @@
     #_#_:descricao ""
     :href   "https://github.com/clj-br/forum/discussions"}])
 
+(def style "
+headers > img {
+  max-width: 20vh;
+  max-height: 20vh;
+}
+body {
+  text-align: center;
+  padding: 2vh;
+  max-width: 38em;
+  margin: auto;
+}
+
+ul {
+  list-style-type: none;
+}
+li {
+  padding: 1em;
+}
+")
+
+(def lista-principal
+  (into [:ul]
+    (for [{:keys [titulo
+                  href]} links]
+      [:li
+       [:a {:target "_blank"
+            :rel    "noreferrer noopener"
+            :href   href}
+        titulo]])))
+
 (defn index
   [req]
   (let [head [:head
@@ -22,110 +65,91 @@
                       :content "width=device-width, initial-scale=1.0"}]
               [:meta {:name    "description"
                       :content "clj-br"}]
-              [:script {:src  "https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.1/js/scittle.js"
+              [:script {:src  "https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.2/js/scittle.js"
                         :type "application/javascript"}]
               [:script {:crossorigin "true"
                         :src         "https://unpkg.com/react@17/umd/react.production.min.js"}]
               [:script {:crossorigin "true"
                         :src         "https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"}]
-              [:script {:src  "https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.1/js/scittle.reagent.js"
+              [:script {:src  "https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.2/js/scittle.reagent.js"
                         :type "application/javascript"}]
               [:title "clj-br"]
-              [:style (h/raw "
- // div::before {content:'[:div \"'}
- // div::after {content:'\"]'}
- title::before {content:'[:title \"'}
- title::after {content:'\"]'}
- // h1::before {content:'[:h1 \"'}
- // h1::after {content:'\"]'}
- ul::before {content:'[:ul '}
- ul::after {content:']'}
- p::before {content:'[:p \"'}
- p::after {content:'\"]'}
- pre::before {content:'[:pre \"'}
- pre::after {content:'\"]'}
- code::before {content:'[:code \"'}
- code::after {content:'\"]'}
- a::before {content:'[:a \"'}
- a::after {content:'\"]'}
- aside::before {content:'[:aside \"'}
- aside::after {content:'\"]'}
- blockquote::before {content:'[:blockquote \"'}
- blockquote::after {content:'\"]'}
- em::before {content:'[:em \"'}
- em::after {content:'\"]'}
- strong::before {content:'[:strong \"'}
- strong::after {content:'\"]'}")]]
-
-
-
-
-
-        lista-principal (into [:ul
-                               {:style {:list-style-type "none"}}]
-                          (for [{:keys [titulo
-                                        descricao
-                                        href]} links]
-                            [:li
-                             {:style {:padding "1em"}}
-                             [:a {:target "_blank"
-                                  :rel    "noreferrer noopener"
-                                  :href   href}
-                              titulo]]))
+              [:style (h/raw style)]]
         body [:body
-              {:style {:max-width "38em"
-                       :margin    "auto"}}
-              [:div
-               {:style {:text-align "center"}}
-               [:img {:style {:width  "20vh"
-                              :height "20vh"}
-                      :src   "/logo.jpg"}]]
-              [:h1 "Comunidade Clojure Brasil"]
-              #_[:p "TODO: Descrição"]
+              [:headers
+               [:img {:src "resources/logo.jpg"}]]
+              [:h1 "Clojure Brasil"]
               [:div
                {:id "playground"}
                lista-principal]
+              [:p "Comece a aprender agora mesmo!"]
+              [:ul
+               {:style {:display         "flex"
+                        :flex-wrap       "wrap"
+                        :justify-content "center"}}
+               (for [{:keys [codigo rotulo]} [{:codigo (with-out-str
+                                                         (pp/pprint lista-principal))
+                                               :rotulo "Website"}
+                                              {:codigo (scittle!
+                                                         (+ 1 2))
+                                               :rotulo "Soma simples"}
+                                              {:codigo (scittle!
+                                                         (require '[reagent.core :as r])
+                                                         (def *n (r/atom 0))
+                                                         (defn contador
+                                                           []
+                                                           [:div
+                                                            [:div (str "Contador: " @*n)]
+                                                            [:button
+                                                             {:onClick (fn []
+                                                                         (swap! *n inc))}
+                                                             "incrementar"]]))
+                                               :rotulo "Contador"}]]
+                 [:li
+                  [:button
+                   {:data-value  codigo
+                    :data-target "editor"
+                    :onClick     (string/join ";\n"
+                                   ["document.getElementById(this.dataset.target).value = this.dataset.value"
+                                    "document.getElementById(this.dataset.target).onkeyup()"])}
+                   rotulo]])]
               [:textarea
-               {:id   "editor"
-                :cols 60
-                :rows 20}
+               {:id      "editor"
+                :onkeyup "this.dataset.state == 'done' ? this.dataset.state = 'idle' : null"
+                :cols    60
+                :rows    20}
                (with-out-str
                  (pp/pprint lista-principal))]
               [:div {:id "playground"}]
-              [:button {:id "go"}
-               "go"]
-              [:script (h/raw "
-let doThing = () => {
-  try {
-  let editor = document.getElementById('editor')
-  let component = scittle.core.eval_string(editor.value)
-  window.loop_component = component
-  scittle.core.eval_string(`
-  (require '[reagent.core :as r]
-           '[reagent.dom :as rdom])
-  (def state (r/atom {:clicks 0}))
-  (rdom/render js/window.loop_component (.getElementById js/document \"playground\"))
-  `)
-  } catch {
-
-  }
-  setTimeout(() => doThing(), 1000)
-}
-doThing();
-let button = document.getElementById('go')
-button.onclick = doThing;
-              ")]
-              #_[:script {:type "application/x-scittle"}
-                 (h/raw (str '(do
-                                (require '[reagent.core :as r]
-                                  '[reagent.dom :as rdom])
-
-                                (def state (r/atom {:clicks 0}))
-
-                                (def my-component
-                                  (read (.-value (js/document.getElementById "editor"))))
-
-                                (rdom/render [my-component] (.getElementById js/document "playground")))))]]]
+              [:pre {:id "stderr"}]
+              [:script {:type "application/x-scittle"}
+               (scittle!
+                 (require '[reagent.core :as r]
+                   '[reagent.dom :as rdom])
+                 (defn render
+                   []
+                   (let [stderr (.getElementById js/document "stderr")
+                         editor (.getElementById js/document "editor")]
+                     (when (-> editor .-dataset .-state #{"idle"})
+                       (set! (-> editor .-dataset .-state) "loading")
+                       (try
+                         (let [component (-> js/window
+                                           .-scittle
+                                           .-core
+                                           (.eval_string (.-value editor)))]
+                           (rdom/render (cond
+                                          (fn? component) [component]
+                                          (var? component) [component]
+                                          (vector? component) component
+                                          :else [:pre (pr-str component)])
+                             (.getElementById js/document "playground"))
+                           (set! (.-innerText stderr) ""))
+                         (catch :default ex
+                           (set! (.-innerText stderr) (str (ex-message ex) "\n"
+                                                        (str (ex-data ex)))))))
+                     (set! (-> editor .-dataset .-state) "done"))
+                   (js/setTimeout render 1000))
+                 (render))]]]
     {:body    (->> [:html
                     {:lang "pt-br"}
                     head
@@ -134,11 +158,32 @@ button.onclick = doThing;
                 (str "<!DOCTYPE html>\n"))
      :headers {"Content-Type"            (mime/default-mime-types "html")
                "Content-Security-Policy" ""}
-
      :status  200}))
 
 (def routes
   `#{["/" :get index]})
+
+(def not-found-interceptor
+  (interceptor/interceptor
+    {:name  ::not-found-interceptor
+     :leave (fn [{:keys [request response]
+                  :as   ctx}]
+              (let [uri (-> request :uri (string/split #"\/"))
+                    ^File f (apply io/file "." uri)
+                    ^File f (if (.isDirectory f)
+                              (apply io/file "." (concat uri ["index.html"]))
+                              f)]
+                (when (and (-> response :status #{200})
+                        (-> ctx :request :request-method #{:get}))
+                  (with-open [output-stream (io/output-stream f)]
+                    (io.pedestal.http.impl.servlet-interceptor/write-body-to-stream (:body response) output-stream)))
+                (cond
+                  (http/response? response) ctx
+                  :else (if (.exists f)
+                          (assoc ctx :response {:body   f
+                                                :status 200})
+                          (assoc ctx :response {:body   "Not found"
+                                                :status 404})))))}))
 
 (defonce *server (atom nil))
 
@@ -146,12 +191,12 @@ button.onclick = doThing;
   [& _]
   (swap! *server (fn [st]
                    (some-> st http/stop)
-                   (-> {::http/routes    (fn []
-                                           (route/expand-routes @#'routes))
-                        ::http/port      8080
-                        ::http/join?     false
-                        ::http/file-path "resources"
-                        ::http/type      :jetty}
+                   (-> {::http/routes                (fn []
+                                                       (route/expand-routes @#'routes))
+                        ::http/port                  8080
+                        ::http/join?                 false
+                        ::http/not-found-interceptor not-found-interceptor
+                        ::http/type                  :jetty}
                      http/default-interceptors
                      http/dev-interceptors
                      http/create-server
