@@ -6,9 +6,26 @@
             [clojure.pprint :as pp]
             [clojure.string :as string]
             [io.pedestal.interceptor :as interceptor]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [cheshire.core :as json])
   (:import (java.nio.charset StandardCharsets)
-           (java.io File)))
+           (java.io File)
+           (java.net URLEncoder)))
+
+(def links
+  [{:titulo "Grupo no Telegram"
+    :href   "https://t.me/clojurebrasil"}
+   {:titulo "Duvidas e discussões"
+    :href   "https://github.com/clj-br/forum/discussions"}])
+
+(def theme-color
+  "#1793d1")
+
+(def background-color
+  "#4d4d4d")
+(def canonical
+  "https://clj-br.github.io/")
+
 
 (set! *warn-on-reflection* true)
 
@@ -18,14 +35,6 @@
                    (list `pp/pprint (list 'quote form)))
         out-forms (cons `with-out-str pp-forms)]
     `(h/raw ~out-forms)))
-
-(def links
-  [{:titulo "Grupo no Telegram"
-    #_#_:descricao ""
-    :href   "https://t.me/clojurebrasil"}
-   {:titulo "Duvidas e discussões"
-    #_#_:descricao ""
-    :href   "https://github.com/clj-br/forum/discussions"}])
 
 (def style "
 headers > img {
@@ -40,6 +49,7 @@ body {
 }
 
 ul {
+  padding: 0;
   list-style-type: none;
 }
 li {
@@ -64,20 +74,41 @@ li {
               [:meta {:name    "viewport"
                       :content "width=device-width, initial-scale=1.0"}]
               [:meta {:name    "description"
-                      :content "clj-br"}]
-              [:script {:src  "https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.2/js/scittle.js"
-                        :type "application/javascript"}]
-              [:script {:crossorigin "true"
-                        :src         "https://unpkg.com/react@17/umd/react.production.min.js"}]
-              [:script {:crossorigin "true"
-                        :src         "https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"}]
-              [:script {:src  "https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.2/js/scittle.reagent.js"
-                        :type "application/javascript"}]
-              [:title "clj-br"]
+                      :content "Clojure Brasil"}]
+              [:meta {:name    "theme-color"
+                      :content theme-color}]
+              [:meta {:property "og:type" :content "website"}]
+              [:meta {:property "og:description" :content "Comunidade Clojure Brasil"}]
+              [:meta {:property "og:url" :content canonical}]
+              [:meta {:property "og:image" :content (str canonical "/resources/logo.svg")}]
+              [:title "Clojure Brasil"]
+              [:link {:rel  "manifest"
+                      :href (str "data:application/json,"
+                              (URLEncoder/encode (json/generate-string
+                                                   {:theme_color      theme-color
+                                                    :start_url        canonical
+                                                    :name             "Clojure Brasil",
+                                                    :background_color background-color
+                                                    :short_name       "clj-br"
+                                                    :icons            [{:src   (str canonical "/resources/logo.svg")
+                                                                        :sizes "192x192"
+                                                                        :type  "image/png"}
+                                                                       {:src   (str canonical "/resources/logo.svg")
+                                                                        :sizes "512x512"
+                                                                        :type  "image/svg+xml"}]
+                                                    :display          "minimal-ui",
+                                                    :manifest_version 2,
+                                                    :version          "1"})
+                                (str StandardCharsets/UTF_8)))}]
+              [:link {:rel  "canonical"
+                      :href canonical}]
+              [:link {:rel "icon" :href "resources/logo.svg"}]
               [:style (h/raw style)]]
         body [:body
               [:headers
-               [:img {:src "resources/logo.jpg"}]]
+               [:img {:alt (str "Logotipo da clojure Brasil, que mistura o logotipo original, inspirado em yin yang"
+                             ", com o formato de uma arara, mantendo as cores originais: tons leves de azul e verde.")
+                      :src "resources/logo.svg"}]]
               [:h1 "Clojure Brasil"]
               [:div
                {:id "playground"}
@@ -114,14 +145,24 @@ li {
                                     "document.getElementById(this.dataset.target).onkeyup()"])}
                    rotulo]])]
               [:textarea
-               {:id      "editor"
-                :onkeyup "this.dataset.state == 'done' ? this.dataset.state = 'idle' : null"
-                :cols    60
-                :rows    20}
+               {:id           "editor"
+                :autocomplete "off"
+                :spellcheck   false
+                :onkeyup      "this.dataset.state == 'done' ? this.dataset.state = 'idle' : null"
+                :cols         50
+                :rows         20}
                (with-out-str
                  (pp/pprint lista-principal))]
               [:div {:id "playground"}]
               [:pre {:id "stderr"}]
+              [:script {:src  "https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.2/js/scittle.js"
+                        :type "application/javascript"}]
+              [:script {:crossorigin "true"
+                        :src         "https://unpkg.com/react@17/umd/react.production.min.js"}]
+              [:script {:crossorigin "true"
+                        :src         "https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"}]
+              [:script {:src  "https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.2/js/scittle.reagent.js"
+                        :type "application/javascript"}]
               [:script {:type "application/x-scittle"}
                (scittle!
                  (require '[reagent.core :as r]
@@ -180,8 +221,9 @@ li {
                 (cond
                   (http/response? response) ctx
                   :else (if (.exists f)
-                          (assoc ctx :response {:body   f
-                                                :status 200})
+                          (assoc ctx :response {:body    f
+                                                :headers {"Content-Type" (mime/ext-mime-type (.getName f))}
+                                                :status  200})
                           (assoc ctx :response {:body   "Not found"
                                                 :status 404})))))}))
 
