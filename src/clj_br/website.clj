@@ -145,11 +145,11 @@ li {
                                     "document.getElementById(this.dataset.target).onkeyup()"])}
                    rotulo]])]
               [:textarea
-               {:id           "editor"
+               {:style        {:width "100%"}
+                :id           "editor"
                 :autocomplete "off"
                 :spellcheck   false
                 :onkeyup      "this.dataset.state == 'done' ? this.dataset.state = 'idle' : null"
-                :cols         50
                 :rows         20}
                (with-out-str
                  (pp/pprint lista-principal))]
