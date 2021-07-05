@@ -79,6 +79,7 @@ li {
                       :content theme-color}]
               [:meta {:property "og:type" :content "website"}]
               [:meta {:property "og:description" :content "Comunidade Clojure Brasil"}]
+              [:meta {:property "og:title" :content "Clojure Brasil"}]
               [:meta {:property "og:url" :content canonical}]
               [:meta {:property "og:image" :content (str canonical "/resources/logo.svg")}]
               [:title "Clojure Brasil"]
