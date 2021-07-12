@@ -43,7 +43,34 @@ document.getElementById(this.dataset.target).onkeyup()">Soma simples</button></l
   [:div (str &quot;Contador: &quot; @*n)]
   [:button {:onClick (fn [] (swap! *n inc))} &quot;incrementar&quot;]])
 " onClick="document.getElementById(this.dataset.target).value = this.dataset.value;
-document.getElementById(this.dataset.target).onkeyup()">Contador</button></li></ul><textarea autocomplete="off" id="editor" onkeyup="this.dataset.state == &apos;done&apos; ? this.dataset.state = &apos;idle&apos; : null" rows="20" style="width:100%;">[:ul
+document.getElementById(this.dataset.target).onkeyup()">Contador</button></li><li><button data-target="editor" data-value="
+(require &apos;[reagent.core :as r])
+
+(def *notas (r/atom {0 {:nota &quot;Conhecer Clojure&quot; :feito? true}
+                     1 {:nota &quot;Aprender Clojure&quot;}}))
+
+(def *nova-nota (r/atom &quot;&quot;))
+
+(defn ui-root []
+  [:div
+   (for [[id {:keys [nota feito?]}] @*notas]
+    [:div
+     {:key id}
+     [:input
+      {:type &quot;checkbox&quot;
+       :on-change #(swap! *notas update-in [id :feito?] not)
+       :checked feito?}]
+     nota
+     (when feito?
+       [:button {:on-click (fn [] (swap! *notas dissoc id))} &quot;x&quot;])])
+   [:input {:value @*nova-nota
+            :on-change (fn [evt] (reset! *nova-nota (-&gt; evt .-target .-value)))}]
+   [:button {:on-click (fn []
+                         (swap! *notas assoc (random-uuid) {:nota @*nova-nota})
+                         (reset! *nova-nota &quot;&quot;))}
+    &quot;+&quot;]])
+ " onClick="document.getElementById(this.dataset.target).value = this.dataset.value;
+document.getElementById(this.dataset.target).onkeyup()">Aplicativo de notas</button></li></ul><textarea autocomplete="off" id="editor" onkeyup="this.dataset.state == &apos;done&apos; ? this.dataset.state = &apos;idle&apos; : null" rows="20" style="width:100%;">[:ul
  [:li
   [:a
    {:target &quot;_blank&quot;,

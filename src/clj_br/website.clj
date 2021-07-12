@@ -136,7 +136,36 @@ li {
                                                              {:onClick (fn []
                                                                          (swap! *n inc))}
                                                              "incrementar"]]))
-                                               :rotulo "Contador"}]]
+                                               :rotulo "Contador"}
+                                              {:codigo "
+(require '[reagent.core :as r])
+
+(def *notas (r/atom {0 {:nota \"Conhecer Clojure\" :feito? true}
+                     1 {:nota \"Aprender Clojure\"}}))
+
+(def *nova-nota (r/atom \"\"))
+
+(defn ui-root []
+  [:div
+   (for [[id {:keys [nota feito?]}] @*notas]
+    [:div
+     {:key id}
+     [:input
+      {:type \"checkbox\"
+       :on-change #(swap! *notas update-in [id :feito?] not)
+       :checked feito?}]
+     nota
+     (when feito?
+       [:button {:on-click (fn [] (swap! *notas dissoc id))} \"x\"])])
+   [:input {:value @*nova-nota
+            :on-change (fn [evt] (reset! *nova-nota (-> evt .-target .-value)))}]
+   [:button {:on-click (fn []
+                         (swap! *notas assoc (random-uuid) {:nota @*nova-nota})
+                         (reset! *nova-nota \"\"))}
+    \"+\"]])
+ "
+
+                                               :rotulo "Aplicativo de notas"}]]
                  [:li
                   [:button
                    {:data-value  codigo
