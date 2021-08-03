@@ -16,7 +16,9 @@
   [{:titulo "Grupo no Telegram"
     :href   "https://t.me/clojurebrasil"}
    {:titulo "Duvidas e discussões"
-    :href   "https://github.com/clj-br/forum/discussions"}])
+    :href   "https://github.com/clj-br/forum/discussions"}
+   {:titulo "Vagas e oportunidades de trabalho"
+    :href   "https://github.com/clj-br/vagas"}])
 
 (def theme-color
   "#1793d1")
