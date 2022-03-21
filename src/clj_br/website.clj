@@ -13,7 +13,9 @@
            (java.net URLEncoder)))
 
 (def links
-  [{:titulo "Grupo no Telegram"
+  [{:titulo "Grupo no Clojurians"
+    :href   "https://join.slack.com/t/clojurians/shared_invite/zt-zjqnhvdj-HSQGSyA79T5qdMb9GwqD1A"}
+   {:titulo "Grupo no Telegram"
     :href   "https://t.me/clojurebrasil"}
    {:titulo "Duvidas e discussões"
     :href   "https://github.com/clj-br/forum/discussions"}
