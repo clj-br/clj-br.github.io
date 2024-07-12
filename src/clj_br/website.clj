@@ -46,24 +46,16 @@ headers > img {
 body {
   text-align: center;
   padding: 2vh;
-  max-width: 38em;
+  max-width: 50em;
   margin: auto;
-}
-
-ul {
-  padding: 0;
-  list-style-type: none;
-}
-li {
-  padding: 1em;
 }
 ")
 
 (def lista-principal
-  (into [:ul]
+  (into [:ul.list-group.list-group-flush]
     (for [{:keys [titulo
                   href]} links]
-      [:li
+      [:li.list-group-item
        [:a {:target "_blank"
             :rel    "noreferrer noopener"
             :href   href}
@@ -85,6 +77,10 @@ li {
               [:meta {:property "og:url" :content canonical}]
               [:meta {:property "og:image" :content (str canonical "/resources/logo.svg")}]
               [:title "Clojure Brasil"]
+              [:link {:rel "stylesheet"
+                      :href "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+                      :integrity "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+                      :crossorigin "anonymous"}]
               [:link {:rel  "manifest"
                       :href (str "data:application/json,"
                               (URLEncoder/encode (json/generate-string
@@ -113,11 +109,8 @@ li {
                              ", com o formato de uma arara, mantendo as cores originais: tons leves de azul e verde.")
                       :src "resources/logo.svg"}]]
               [:h1 "Clojure Brasil"]
-              [:div
-               {:id "playground"}
-               lista-principal]
               [:p "Comece a aprender agora mesmo!"]
-              [:ul
+              [:ul.nav.nav-tabs
                {:style {:display         "flex"
                         :flex-wrap       "wrap"
                         :justify-content "center"}}
@@ -130,17 +123,14 @@ li {
                                               {:codigo (scittle!
                                                          (require '[reagent.core :as r])
                                                          (def *n (r/atom 0))
-                                                         (defn contador
-                                                           []
+                                                         (defn contador []
                                                            [:div
-                                                            [:div (str "Contador: " @*n)]
-                                                            [:button
-                                                             {:onClick (fn []
-                                                                         (swap! *n inc))}
-                                                             "incrementar"]]))
+                                                            [:div (str @*n)]
+                                                            [:button.btn.btn-light.mt-1
+                                                             {:onClick (fn [] (swap! *n inc))}
+                                                             "Incrementar"]]))
                                                :rotulo "Contador"}
-                                              {:codigo "
-(require '[reagent.core :as r])
+                                              {:codigo "(require '[reagent.core :as r])
 
 (def *notas (r/atom {0 {:nota \"Conhecer Clojure\" :feito? true}
                      1 {:nota \"Aprender Clojure\"}}))
@@ -149,44 +139,52 @@ li {
 
 (defn ui-root []
   [:div
-   (for [[id {:keys [nota feito?]}] @*notas]
-    [:div
-     {:key id}
-     [:input
-      {:type \"checkbox\"
-       :on-change #(swap! *notas update-in [id :feito?] not)
-       :checked feito?}]
-     nota
-     (when feito?
-       [:button {:on-click (fn [] (swap! *notas dissoc id))} \"x\"])])
-   [:input {:value @*nova-nota
-            :on-change (fn [evt] (reset! *nova-nota (-> evt .-target .-value)))}]
-   [:button {:on-click (fn []
-                         (swap! *notas assoc (random-uuid) {:nota @*nova-nota})
+   [:ol.list-group.mb-3.text-start
+    (for [[id {:keys [nota feito?]}] @*notas]
+      [:li.list-group-item.d-flex {:key id, :style {:gap \"8px\"}}
+       [:input.form-check-input
+        {:type \"checkbox\"
+         :on-change #(swap! *notas update-in [id :feito?] not)
+         :checked feito?}]
+       [:span.flex-grow-1 nota]
+       (when feito?
+         [:button.btn.btn-danger.btn-sm.py-0 {:on-click (fn [] (swap! *notas dissoc id))} \"x\"])])]
+[:form.input-group {:on-submit (fn [evt] (.preventDefault evt)
+                             (swap! *notas assoc (random-uuid) {:nota @*nova-nota})
                          (reset! *nova-nota \"\"))}
-    \"+\"]])
- "
+   [:input {:class \"form-control\"
+            :value @*nova-nota
+            :on-change (fn [evt] (reset! *nova-nota (-> evt .-target .-value)))}]
+[:button.btn.btn-outline-secondary \"+\"]]]) "
 
-                                               :rotulo "Aplicativo de notas"}]]
-                 [:li
-                  [:button
-                   {:data-value  codigo
+                                               :rotulo "Aplicativo de afazeres"}]]
+                 [:li.nav-item
+                  [:a.nav-link
+                   {:class (when (= rotulo "Website") "active")
+                    :data-value  codigo
                     :data-target "editor"
-                    :onClick     (string/join ";\n"
-                                   ["document.getElementById(this.dataset.target).value = this.dataset.value"
-                                    "document.getElementById(this.dataset.target).onkeyup()"])}
+                    :onClick    (string/join ";\n"
+                                              ["[...document.querySelectorAll(\".nav-link\")].map((el) => el.classList.remove(\"active\"))"
+                                               "this.classList.add(\"active\")"
+                                               "document.getElementById(this.dataset.target).value = this.dataset.value"
+                                               "document.getElementById(this.dataset.target).onkeyup()"])}
                    rotulo]])]
-              [:textarea
-               {:style        {:width "100%"}
-                :id           "editor"
-                :autocomplete "off"
-                :spellcheck   false
-                :onkeyup      "this.dataset.state == 'done' ? this.dataset.state = 'idle' : null"
-                :rows         20}
-               (with-out-str
-                 (pp/pprint lista-principal))]
-              [:div {:id "playground"}]
-              [:pre {:id "stderr"}]
+              [:div.py-3
+               {:style {:display "grid"
+                        :grid-template-columns "1fr 1fr"
+                        :gap "16px"}}
+               [:textarea
+                {:style        {:width "100%", :font-family "monospace", :font-size "12px"}
+                 :id           "editor"
+                 :autocomplete "off"
+                 :spellcheck   false
+                 :onkeyup      "this.dataset.state == 'done' ? this.dataset.state = 'idle' : null"
+                 :rows         20}
+                (with-out-str
+                  (pp/pprint lista-principal))]
+               [:div {:style {:border "1px solid var(--bs-secondary-bg)"}}
+                [:div.p-3 {:id "playground"}]
+                [:pre {:id "stderr"}]]]
               [:script {:src  "https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.2/js/scittle.js"
                         :type "application/javascript"}]
               [:script {:crossorigin "true"
@@ -202,8 +200,10 @@ li {
                  (defn render
                    []
                    (let [stderr (.getElementById js/document "stderr")
-                         editor (.getElementById js/document "editor")]
-                     (when (-> editor .-dataset .-state #{"idle"})
+                         editor (.getElementById js/document "editor")
+                         dataset-state (-> editor .-dataset .-state)]
+                     (when (or (= dataset-state js/undefined)
+                               (= "idle" dataset-state))
                        (set! (-> editor .-dataset .-state) "loading")
                        (try
                          (let [component (-> js/window
@@ -275,3 +275,7 @@ li {
                      http/dev-interceptors
                      http/create-server
                      http/start))))
+
+(comment
+  (-main)
+  nil)
