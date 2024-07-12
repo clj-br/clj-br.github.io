@@ -49,13 +49,14 @@ body {
   max-width: 50em;
   margin: auto;
 }
+li { list-style-type: none }
 ")
 
 (def lista-principal
-  (into [:ul.list-group.list-group-flush]
+  (into [:ul]
     (for [{:keys [titulo
                   href]} links]
-      [:li.list-group-item
+      [:li
        [:a {:target "_blank"
             :rel    "noreferrer noopener"
             :href   href}
@@ -126,8 +127,7 @@ body {
                                                          (defn contador []
                                                            [:div
                                                             [:div (str @*n)]
-                                                            [:button.btn.btn-light.mt-1
-                                                             {:onClick (fn [] (swap! *n inc))}
+                                                            [:button {:onClick (fn [] (swap! *n inc))}
                                                              "Incrementar"]]))
                                                :rotulo "Contador"}
                                               {:codigo "(require '[reagent.core :as r])
@@ -139,23 +139,22 @@ body {
 
 (defn ui-root []
   [:div
-   [:ol.list-group.mb-3.text-start
+   [:ol
     (for [[id {:keys [nota feito?]}] @*notas]
-      [:li.list-group-item.d-flex {:key id, :style {:gap \"8px\"}}
-       [:input.form-check-input
+      [:li {:key id, :style {:gap \"8px\"}}
+       [:input
         {:type \"checkbox\"
          :on-change #(swap! *notas update-in [id :feito?] not)
          :checked feito?}]
-       [:span.flex-grow-1 nota]
+       nota
        (when feito?
-         [:button.btn.btn-danger.btn-sm.py-0 {:on-click (fn [] (swap! *notas dissoc id))} \"x\"])])]
-[:form.input-group {:on-submit (fn [evt] (.preventDefault evt)
+         [:button {:on-click (fn [] (swap! *notas dissoc id))} \"x\"])])]
+[:form {:on-submit (fn [evt] (.preventDefault evt)
                              (swap! *notas assoc (random-uuid) {:nota @*nova-nota})
                          (reset! *nova-nota \"\"))}
-   [:input {:class \"form-control\"
-            :value @*nova-nota
+   [:input {:value @*nova-nota
             :on-change (fn [evt] (reset! *nova-nota (-> evt .-target .-value)))}]
-[:button.btn.btn-outline-secondary \"+\"]]]) "
+[:button \"+\"]]]) "
 
                                                :rotulo "Aplicativo de afazeres"}]]
                  [:li.nav-item
@@ -267,7 +266,7 @@ body {
                    (some-> st http/stop)
                    (-> {::http/routes                (fn []
                                                        (route/expand-routes @#'routes))
-                        ::http/port                  8080
+                        ::http/port                  9090
                         ::http/join?                 false
                         ::http/not-found-interceptor not-found-interceptor
                         ::http/type                  :jetty}
