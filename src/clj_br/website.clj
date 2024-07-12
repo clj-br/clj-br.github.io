@@ -266,7 +266,7 @@ li { list-style-type: none }
                    (some-> st http/stop)
                    (-> {::http/routes                (fn []
                                                        (route/expand-routes @#'routes))
-                        ::http/port                  9090
+                        ::http/port                  8080
                         ::http/join?                 false
                         ::http/not-found-interceptor not-found-interceptor
                         ::http/type                  :jetty}
