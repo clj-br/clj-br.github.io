@@ -15,6 +15,12 @@
 (def links
   [{:titulo "Grupo no Telegram"
     :href   "https://t.me/clojurebrasil"}
+   {:titulo "Servidor do Discord"
+    :href   "https://discord.gg/UTxeA9tHnd"}
+   {:titulo "Canal no YouTube"
+    :href   "https://www.youtube.com/@clojure-br"}
+   {:titulo "Meetup"
+    :href   "https://www.meetup.com/clojure-br/"}
    {:titulo "Duvidas e discussões"
     :href   "https://github.com/clj-br/forum/discussions"}
    {:titulo "Vagas e oportunidades de trabalho"
