@@ -5,6 +5,8 @@
 *.swp
 .DS_Store
 .atom/
+.clj-kondo/
+.lsp/
 .build/
 .buildlog/
 .history

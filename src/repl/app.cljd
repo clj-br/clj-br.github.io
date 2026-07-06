@@ -134,19 +134,226 @@
       (m/SizedBox .height 20.0)]
      (map flutter-link links)))))
 
-(def hiccup-source
+(def site-hiccup-source
   "(ns runtime
   (:require [clj-br.site :as site]))
 
-(site/hiccup site/model)
+(let [{:keys [title subtitle logo links]} site/model]
+  [:section {:style {:font-family \"system-ui, -apple-system, sans-serif\"
+                     :text-align \"center\"
+                     :padding \"24px\"
+                     :color \"#222\"}}
+   [:img {:src (str \"assets/\" logo)
+          :alt title
+          :style {:height \"112px\"
+                  :margin-bottom \"12px\"}}]
+   [:h1 {:style {:font-size \"34px\"
+                 :margin \"8px 0\"}}
+    title]
+   [:p {:style {:font-size \"18px\"
+                :margin \"0 0 20px 0\"
+                :color \"#4d4d4d\"}}
+    subtitle]
+   [:ul {:style {:list-style \"none\"
+                 :padding \"0\"
+                 :margin \"0\"}}
+    (for [{:keys [title href]} links]
+      [:li {:style {:margin \"10px 0\"}}
+       [:a {:href href
+            :style {:color \"#1793d1\"
+                    :font-size \"17px\"
+                    :text-decoration \"none\"}}
+        title]])]])
 ")
 
-(def cljd-source
+(def site-cljd-source
   "(ns runtime
-  (:require [clj-br.site :as site]))
+  (:require [\"package:flutter/material.dart\" :as m]
+            [clj-br.site :as site]))
 
-(site/flutter site/model)
+(let [{:keys [title subtitle logo links]} site/model
+      link-view (fn [{:keys [title href]}]
+                  (m/Container
+                   .margin (m/EdgeInsets.symmetric .vertical 5.0)
+                   .child
+                   (m/Column
+                    .mainAxisSize m/MainAxisSize.min
+                    .children
+                    [(m/Text title
+                             .textAlign m/TextAlign.center
+                             .style (m/TextStyle
+                                     .fontSize 17.0
+                                     .fontWeight m/FontWeight.w600
+                                     .color (m/Color 0xFF1793D1)))
+                     (m/Text href
+                             .textAlign m/TextAlign.center
+                             .style (m/TextStyle
+                                     .fontSize 12.0
+                                     .color m/Colors.black54))])))]
+  (m/Column
+   .mainAxisSize m/MainAxisSize.min
+   .crossAxisAlignment m/CrossAxisAlignment.center
+   .children
+   (vec
+    (concat
+     [(m/Image .image (m/AssetImage logo) .height 112.0)
+      (m/SizedBox .height 12.0)
+      (m/Text title
+              .textAlign m/TextAlign.center
+              .style (m/TextStyle
+                      .fontSize 34.0
+                      .fontWeight m/FontWeight.bold
+                      .color (m/Color 0xFF222222)))
+      (m/SizedBox .height 8.0)
+      (m/Text subtitle
+              .textAlign m/TextAlign.center
+              .style (m/TextStyle
+                      .fontSize 18.0
+                      .color (m/Color 0xFF4D4D4D)))
+      (m/SizedBox .height 20.0)]
+     (map link-view links)))))
 ")
+
+(def counter-hiccup-source
+  "(ns runtime)
+
+(let [value 6]
+  [:section {:style {:font-family \"system-ui, -apple-system, sans-serif\"
+                     :text-align \"center\"
+                     :padding \"24px\"}}
+   [:h1 {:style {:font-size \"30px\"
+                 :margin \"0 0 18px 0\"}}
+    \"Counter\"]
+   [:p {:style {:font-size \"16px\"
+                :color \"#4d4d4d\"}}
+    \"Declarative Hiccup/Reagent shape\"]
+   [:div {:style {:font-size \"54px\"
+                  :font-weight \"700\"
+                  :margin \"18px 0\"}}
+    value]
+   [:button {:style {:border \"1px solid #1793d1\"
+                     :border-radius \"6px\"
+                     :background \"#e8f4fb\"
+                     :color \"#1793d1\"
+                     :padding \"10px 16px\"}}
+    \"increment\"]])
+")
+
+(def counter-cljd-source
+  "(ns runtime
+  (:require [\"package:flutter/material.dart\" :as m]
+            [cljd.flutter :as f]))
+
+(defonce counter (atom 0))
+
+(f/watch counter [value]
+  (m/Column
+   .mainAxisSize m/MainAxisSize.min
+   .crossAxisAlignment m/CrossAxisAlignment.center
+   .children
+   [(m/Text \"Counter\"
+            .textAlign m/TextAlign.center
+            .style (m/TextStyle
+                    .fontSize 30.0
+                    .fontWeight m/FontWeight.bold
+                    .color (m/Color 0xFF222222)))
+    (m/SizedBox .height 10.0)
+    (m/Text \"Interactive ClojureDart widget shape\"
+            .textAlign m/TextAlign.center
+            .style (m/TextStyle
+                    .fontSize 16.0
+                    .color m/Colors.black54))
+    (m/SizedBox .height 18.0)
+    (m/Text (str value)
+            .textAlign m/TextAlign.center
+            .style (m/TextStyle
+                    .fontSize 54.0
+                    .fontWeight m/FontWeight.bold
+                    .color (m/Color 0xFF1793D1)))
+    (m/SizedBox .height 18.0)
+    (m/ElevatedButton
+     .onPressed (fn [] (swap! counter inc))
+     .child (m/Text \"increment\"))]))
+")
+
+(def todo-hiccup-source
+  "(ns runtime)
+
+(let [todos [{:text \"Entrar no Telegram\" :done true}
+             {:text \"Participar do Discord\" :done false}
+             {:text \"Assistir o canal\" :done false}]]
+  [:section {:style {:font-family \"system-ui, -apple-system, sans-serif\"
+                     :padding \"24px\"
+                     :color \"#222\"}}
+   [:h1 {:style {:font-size \"30px\"
+                 :text-align \"center\"
+                 :margin \"0 0 18px 0\"}}
+    \"Todo list\"]
+   [:ul {:style {:list-style \"none\"
+                 :padding \"0\"
+                 :margin \"0\"}}
+    (for [{:keys [text done]} todos]
+      [:li {:style {:display \"flex\"
+                    :gap \"10px\"
+                    :align-items \"center\"
+                    :padding \"8px 0\"}}
+       [:input {:type \"checkbox\"
+                :checked done
+                :disabled true}]
+       [:span {:style {:text-decoration (when done \"line-through\")
+                       :color (if done \"#667085\" \"#222\")}}
+        text]])]])
+")
+
+(def todo-cljd-source
+  "(ns runtime
+  (:require [\"package:flutter/material.dart\" :as m]))
+
+(let [todos [{:text \"Entrar no Telegram\" :done true}
+             {:text \"Participar do Discord\" :done false}
+             {:text \"Assistir o canal\" :done false}]
+      todo-row (fn [{:keys [text done]}]
+                 (m/Row
+                  .children
+                  [(m/Checkbox .value done .onChanged nil)
+                   (m/SizedBox .width 8.0)
+                   (m/Text text
+                           .style (m/TextStyle
+                                   .fontSize 16.0
+                                   .color (if done
+                                            (m/Color 0xFF667085)
+                                            (m/Color 0xFF222222))))]))]
+  (m/Column
+   .mainAxisSize m/MainAxisSize.min
+   .crossAxisAlignment m/CrossAxisAlignment.stretch
+   .children
+   (vec
+    (concat
+     [(m/Text \"Todo list\"
+              .textAlign m/TextAlign.center
+              .style (m/TextStyle
+                      .fontSize 30.0
+                      .fontWeight m/FontWeight.bold
+                      .color (m/Color 0xFF222222)))
+      (m/SizedBox .height 18.0)]
+     (map todo-row todos)))))
+")
+
+(def samples
+  {:site {:label "Site"
+          :hiccup site-hiccup-source
+          :cljd site-cljd-source}
+   :counter {:label "Counter"
+             :hiccup counter-hiccup-source
+             :cljd counter-cljd-source}
+   :todo {:label "Todo list"
+          :hiccup todo-hiccup-source
+          :cljd todo-cljd-source}})
+
+(def sample-order [:site :counter :todo])
+
+(defn source-for [sample mode]
+  (get-in samples [sample mode]))
 
 (defn hiccup-mode? [mode]
   (= mode :hiccup))
@@ -177,7 +384,7 @@
 
 (defn make-ctx []
   (let [Text (fn [data & {:keys [style textAlign]}]
-               (m/Text (str data)
+               (m/Text (if (nil? data) "" (str data))
                        .textAlign textAlign
                        .style style))
         TextStyle (fn [& {:keys [fontSize fontWeight color]}]
@@ -188,15 +395,27 @@
                  (m/Column .mainAxisSize (or mainAxisSize m/MainAxisSize.min)
                            .crossAxisAlignment (or crossAxisAlignment m/CrossAxisAlignment.center)
                            .children (vec children)))
+        Row (fn [& {:keys [children]}]
+              (m/Row .children (vec children)))
         SizedBox (fn [& {:keys [height width child]}]
                    (m/SizedBox .height height .width width .child child))
         Container (fn [& {:keys [padding margin child]}]
                     (m/Container .padding padding
                                  .margin margin
                                  .child child))
+        Image (fn [& {:keys [image height]}]
+                (m/Image .image image .height height))
+        AssetImage (fn [asset] (m/AssetImage asset))
         EdgeInsets.all (fn [value] (m/EdgeInsets.all value))
+        EdgeInsets.symmetric (fn [& {:keys [horizontal vertical]}]
+                               (m/EdgeInsets.symmetric .horizontal (or horizontal 0.0)
+                                                       .vertical (or vertical 0.0)))
+        ElevatedButton (fn [& {:keys [onPressed child]}]
+                         (m/ElevatedButton .onPressed onPressed .child child))
+        Checkbox (fn [& {:keys [value onChanged]}]
+                   (m/Checkbox .value value .onChanged onChanged))
         Color (fn [value] (m/Color value))
-        watch-fn (fn [a render] (f/widget :watch [v a] (render v)))]
+        watch-fn (fn [a render] (f/widget :watch [_ a] (render @a)))]
     (sci/init
      {:namespaces
       {'clj-br.site
@@ -208,13 +427,20 @@
        {'Text Text
         'TextStyle TextStyle
         'Column Column
+        'Row Row
         'SizedBox SizedBox
         'Container Container
+        'Image Image
+        'AssetImage AssetImage
         'EdgeInsets.all EdgeInsets.all
+        'EdgeInsets.symmetric EdgeInsets.symmetric
+        'ElevatedButton ElevatedButton
+        'Checkbox Checkbox
         'Color Color
         'TextAlign.center m/TextAlign.center
         'MainAxisSize.min m/MainAxisSize.min
         'CrossAxisAlignment.center m/CrossAxisAlignment.center
+        'CrossAxisAlignment.stretch m/CrossAxisAlignment.stretch
         'FontWeight.bold m/FontWeight.bold
         'FontWeight.w600 m/FontWeight.w600
         'Colors.black54 m/Colors.black54
@@ -237,15 +463,24 @@
     .padding (m/EdgeInsets.all 18.0)
     .child child)))
 
-(defn mode-button [active-mode label mode source select-source!]
+(defn mode-button [active-mode label mode select-mode!]
   (let [active? (= active-mode mode)]
     (m/OutlinedButton
-     .onPressed (fn [] (select-source! mode source))
+     .onPressed (fn [] (select-mode! mode))
      .style (m/OutlinedButton.styleFrom
              .backgroundColor (when active? (m/Color 0xFFE8F4FB)))
      .child (m/Text label))))
 
-(defn runtime-editor [active-mode select-source! controller result ctx]
+(defn sample-button [active-sample sample select-sample!]
+  (let [active? (= active-sample sample)
+        label (get-in samples [sample :label])]
+    (m/OutlinedButton
+     .onPressed (fn [] (select-sample! sample))
+     .style (m/OutlinedButton.styleFrom
+             .backgroundColor (when active? (m/Color 0xFFF2F4F7)))
+     .child (m/Text label))))
+
+(defn runtime-editor [active-mode active-sample select-mode! select-sample! controller result ctx]
   (card
    (m/Column
     .mainAxisSize m/MainAxisSize.min
@@ -260,8 +495,21 @@
       .spacing 8.0
       .runSpacing 8.0
       .children
-      [(mode-button active-mode "Hiccup/Reagent" :hiccup hiccup-source select-source!)
-       (mode-button active-mode "ClojureDart widget" :cljd cljd-source select-source!)])
+      [(mode-button active-mode "Hiccup/Reagent" :hiccup select-mode!)
+       (mode-button active-mode "ClojureDart widget" :cljd select-mode!)])
+     (m/SizedBox .height 10.0)
+     (m/Text "Sample"
+             .style (m/TextStyle .fontSize 13.0
+                                 .fontWeight m/FontWeight.bold
+                                 .color m/Colors.black54))
+     (m/SizedBox .height 8.0)
+     (m/Wrap
+      .spacing 8.0
+      .runSpacing 8.0
+      .children
+      (vec
+       (for [sample sample-order]
+         (sample-button active-sample sample select-sample!))))
      (m/SizedBox .height 12.0)
      (m/TextField
       .controller controller
@@ -278,15 +526,15 @@
                     "SCI Hiccup/Reagent source"
                     "SCI ClojureDart widget source")))])))
 
-(defn page-content [active-mode select-source! eval-result controller result ctx]
+(defn page-content [active-mode active-sample select-mode! select-sample! eval-result controller result ctx]
   (m/Column
    .mainAxisSize m/MainAxisSize.min
    .children
    [(card (result-widget eval-result))
     (m/SizedBox .height 18.0)
-    (runtime-editor active-mode select-source! controller result ctx)]))
+    (runtime-editor active-mode active-sample select-mode! select-sample! controller result ctx)]))
 
-(defn page [active-mode select-source! eval-result controller result ctx]
+(defn page [active-mode active-sample select-mode! select-sample! eval-result controller result ctx]
   (m/MaterialApp
    .title "Clojure Brasil"
    .theme (m/ThemeData .useMaterial3 true
@@ -305,18 +553,25 @@
        .child
        (m/ConstrainedBox
         .constraints (m/BoxConstraints .maxWidth 760.0)
-        .child (page-content active-mode select-source! eval-result controller result ctx))))))))
+        .child (page-content active-mode active-sample select-mode! select-sample! eval-result controller result ctx))))))))
 
 (defn main []
   (let [ctx (make-ctx)
-        result (atom (eval-source ctx hiccup-source))
-        controller (m/TextEditingController .text hiccup-source)
+        initial-source (source-for :site :hiccup)
+        result (atom (eval-source ctx initial-source))
+        controller (m/TextEditingController .text initial-source)
         active-mode (atom :hiccup)
-        select-source! (fn [mode source]
+        active-sample (atom :site)
+        load-source! (fn [mode sample]
+                       (let [source (source-for sample mode)]
                          (reset! active-mode mode)
+                         (reset! active-sample sample)
                          (set! (.-text controller) source)
-                         (reset! result (eval-source ctx source)))]
+                         (reset! result (eval-source ctx source))))
+        select-mode! (fn [mode] (load-source! mode @active-sample))
+        select-sample! (fn [sample] (load-source! @active-mode sample))]
     (f/run
      (f/widget :watch [r result
-                       mode active-mode]
-       (page mode select-source! r controller result ctx)))))
+                       mode active-mode
+                       sample active-sample]
+       (page mode sample select-mode! select-sample! r controller result ctx)))))
