@@ -1,19 +1,32 @@
 # clj-br.github.io
-clj-br website 
 
-# Flutter web
+Site da comunidade Clojure Brasil publicado em
+`https://clj-br.github.io/`.
 
-Este repositorio tambem pode rodar como um app Flutter web via
-ClojureDart, seguindo o exemplo
-`babashka/sci/examples/cljd-flutter-repl`.
+O site publicado e um app Flutter web gerado a partir de ClojureDart. A
+raiz do repositorio contem o build estatico que o GitHub Pages serve.
+
+## Desenvolvimento
+
+Instale/use as ferramentas pelo mise:
+
+```shell
+mise install
+```
+
+Inicialize os arquivos gerados pelo Flutter/ClojureDart quando necessario:
 
 ```shell
 mise run flutter-init
-mise run flutter-compile
-mise run flutter-run
 ```
 
-Durante o desenvolvimento:
+Compile o codigo ClojureDart:
+
+```shell
+mise run flutter-compile
+```
+
+Rode o app em modo desenvolvimento:
 
 ```shell
 mise run flutter-web
@@ -21,7 +34,7 @@ mise run flutter-web
 
 Para abrir em outro navegador, nao abra `web/index.html` diretamente com
 `file://`. O diretorio `web/` e entrada de build do Flutter; ele precisa
-ser servido por HTTP. Use:
+ser servido por HTTP:
 
 ```shell
 mise run flutter-web-server
@@ -29,61 +42,50 @@ mise run flutter-web-server
 
 Depois abra `http://localhost:8081`.
 
-Para gerar a versao estatica final:
+## Publicacao
+
+Para gerar o app Flutter web em `build/web/`:
 
 ```shell
 mise run flutter-build-web
 ```
 
-O resultado fica em `build/web/`.
-
-Para publicar no GitHub Pages deste repositorio (`clj-br.github.io`),
-gere o Flutter web e copie o resultado para a raiz:
+Para atualizar o que o GitHub Pages serve na raiz do repositorio:
 
 ```shell
 mise run github-pages-build
 ```
 
-Esse comando sobrescreve o `index.html` da raiz com o HTML gerado pelo
-Flutter e copia os assets necessarios para que
-`https://clj-br.github.io/` carregue o app.
+Esse comando compila `src/repl/app.cljd`, executa `flutter build web
+--base-href /` e copia `build/web/` para a raiz. Depois disso, commit os
+arquivos alterados/gerados da raiz.
 
-O REPL SCI dentro do app renderiza widgets Flutter diretamente e tambem
-renderiza vetores Hiccup em um widget `flutter_html`.
+## Estrutura
 
-# Contribuindo
+- `src/repl/app.cljd`: codigo-fonte principal do app Flutter web.
+- `web/`: configuracao de entrada do Flutter web.
+- `index.html`, `main.dart.js`, `assets/`, `canvaskit/`, `icons/`:
+  build estatico publicado pelo GitHub Pages.
+- `scripts/publish_flutter_to_pages.sh`: script usado por
+  `mise run github-pages-build`.
+- `src/clj_br/website.clj`: gerador estatico antigo, mantido por enquanto.
 
-Inicie um REPL
-
-```shell
-clj
-=>
-```
-
-Carregue o servidor e inicie ele
-
-```clojure
-(do 
-  (require 'clj-br.website :reload)
-  (clj-br.website/-main))
-```
-
-Repita esse comando para carregar as alterações feitas no arquivo
-sem precisar reiniciar o REPL.
-
-O servidor ficará disponivel em localhost:8080
-
-# Estrutura do projeto
-
-O codigo-fonte principal do app Flutter web fica em
-`src/repl/app.cljd`. Ele segue o exemplo `cljd-flutter-repl` do SCI:
-um editor dentro do app avalia codigo Clojure via SCI e mostra o
-resultado no painel de preview.
+O app segue o exemplo `babashka/sci/examples/cljd-flutter-repl`: um
+editor dentro do app avalia codigo Clojure via SCI e mostra o resultado
+no painel de preview.
 
 Existem dois caminhos de renderizacao:
 
 - widgets Flutter criados diretamente por ClojureDart;
 - vetores Hiccup convertidos para HTML e exibidos por `flutter_html`.
 
-Arquivos gerados pelo ClojureDart e pelo Flutter ficam ignorados no Git,
-exceto `web/`, que guarda a configuracao web do projeto Flutter.
+## Gerador antigo
+
+O antigo servidor Pedestal ainda pode ser iniciado com:
+
+```shell
+mise run static-site
+```
+
+Ele fica disponivel em `http://localhost:8080`, mas o caminho principal
+do site agora e o build Flutter web publicado na raiz.
