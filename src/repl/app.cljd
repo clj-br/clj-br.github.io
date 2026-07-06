@@ -103,6 +103,14 @@
     (str require-line "(m/Column\n .mainAxisSize m/MainAxisSize.min\n .children\n [(m/Text (.upper \"dart string method\"))\n  (m/Text (str \"length = \" (.-length \"clojuredart\")))\n  (m/Text (pr-str (map inc [1 2 3])))])")]
    ["cljd counter"
     (str require-line "(defonce n (atom 0))\n(f/watch n [c]\n (m/Column\n  .mainAxisSize m/MainAxisSize.min\n  .children\n  [(m/Text (str \"clicked \" c))\n   (m/ElevatedButton\n    .onPressed (fn [] (swap! n inc))\n    .child (m/Text \"increment\"))]))")]
+   ["sample counter"
+    (str require-line "(defonce counter (atom 0))\n(f/watch counter [n]\n (m/Column\n  .mainAxisSize m/MainAxisSize.min\n  .children\n  [(m/Text \"You have pushed the button this many times:\")\n   (m/Text (str n) .style (m/TextStyle .fontSize 42.0\n                                      .fontWeight m/FontWeight.bold\n                                      .color m/Colors.greenAccent))\n   (m/FloatingActionButton\n    .tooltip \"Increment\"\n    .onPressed #(swap! counter inc)\n    .child (m/Icon m/Icons.add))]))")]
+   ["sample datatable"
+    (str require-line "(defn data-table [& {:keys [cols rows]}]\n (m/SingleChildScrollView\n  .scrollDirection m/Axis.horizontal\n  .child\n  (m/DataTable\n   .headingTextStyle (m/TextStyle .fontWeight m/FontWeight.bold\n                                  .color m/Colors.blue)\n   .showBottomBorder true\n   .columns (for [col cols]\n              (m/DataColumn .label (m/Text col)))\n   .rows (for [row rows]\n           (m/DataRow\n            .cells (for [cell row]\n                     (m/DataCell (m/Text cell))))))))\n\n(data-table\n :cols [\"#\" \"Name\" \"Age\" \"City\"]\n :rows [[\"1\" \"Ana\" \"42\" \"Sao Paulo\"]\n        [\"2\" \"Bia\" \"10\" \"Curitiba\"]\n        [\"3\" \"Caio\" \"13\" \"Recife\"]\n        [\"4\" \"Duda\" \"11\" \"Belem\"]])")]
+   ["sample grid"
+    (str require-line "(m/GridView.count\n .crossAxisCount 3\n .children\n (for [i (range 12)]\n  (m/Card\n   .child\n   (m/Center\n    .child\n    (m/Text (str \"Item \" i)\n            .style (m/TextStyle .fontSize 18.0))))))")]
+   ["sample tabs"
+    (str require-line "(m/DefaultTabController\n .length 3\n .child\n (m/Column\n  .children\n  [(m/TabBar\n    .tabs [(m/Tab .icon (m/Icon m/Icons.directions_car))\n           (m/Tab .icon (m/Icon m/Icons.directions_transit))\n           (m/Tab .icon (m/Icon m/Icons.directions_bike))])\n   (m/Expanded\n    .child\n    (m/TabBarView\n     .children [(m/Center .child (m/Text \"Car\"))\n                (m/Center .child (m/Text \"Transit\"))\n                (m/Center .child (m/Text \"Bike\"))]))]))")]
    ["clj-br flutter" "(clj-br.app/clj-br-flutter-view)"]
    ["hiccup html"
     (str require-line "(h/html\n [:div {:style \"padding: 16px; font-family: sans-serif;\"}\n  [:h2 \"Hiccup in flutter_html\"]\n  [:p \"This vector becomes HTML and is rendered by the Flutter Html widget.\"]\n  [:a {:href \"https://clojure.org\"} \"clojure.org\"]])")]
@@ -124,8 +132,12 @@
                            .children (vec children)))
         Row (fn [& {:keys [children]}]
               (m/Row .mainAxisSize m/MainAxisSize.min .children (vec children)))
+        Center (fn [& {:keys [child]}]
+                 (m/Center .child child))
         Card (fn [& {:keys [child]}]
                (m/Card .child child))
+        Expanded (fn [& {:keys [child]}]
+                   (m/Expanded .child child))
         Padding (fn [& {:keys [padding child]}]
                   (m/Padding .padding padding .child child))
         SizedBox (fn [& {:keys [height width child]}]
@@ -140,6 +152,31 @@
                          (m/Padding .padding (m/EdgeInsets.all 4.0)
                                     .child (m/ElevatedButton .onPressed onPressed
                                                              .child child)))
+        FloatingActionButton (fn [& {:keys [onPressed tooltip child]}]
+                               (m/FloatingActionButton .onPressed onPressed
+                                                       .tooltip tooltip
+                                                       .child child))
+        Icon (fn [icon] (m/Icon icon))
+        SingleChildScrollView (fn [& {:keys [scrollDirection padding child]}]
+                                (m/SingleChildScrollView .scrollDirection scrollDirection
+                                                         .padding padding
+                                                         .child child))
+        DataColumn (fn [& {:keys [label]}] (m/DataColumn .label label))
+        DataCell (fn [child] (m/DataCell child))
+        DataRow (fn [& {:keys [cells]}] (m/DataRow .cells (vec cells)))
+        DataTable (fn [& {:keys [headingTextStyle showBottomBorder columns rows]}]
+                    (m/DataTable .headingTextStyle headingTextStyle
+                                 .showBottomBorder showBottomBorder
+                                 .columns (vec columns)
+                                 .rows (vec rows)))
+        GridView.count (fn [& {:keys [crossAxisCount children]}]
+                         (m/GridView.count .crossAxisCount crossAxisCount
+                                           .children (vec children)))
+        DefaultTabController (fn [& {:keys [length child]}]
+                               (m/DefaultTabController .length length .child child))
+        TabBar (fn [& {:keys [tabs]}] (m/TabBar .tabs (vec tabs)))
+        TabBarView (fn [& {:keys [children]}] (m/TabBarView .children (vec children)))
+        Tab (fn [& {:keys [icon child]}] (m/Tab .icon icon .child child))
         watch-fn (fn [a render] (f/widget :watch [v a] (render v)))]
     (sci/init
      {:namespaces
@@ -148,15 +185,34 @@
         'TextStyle TextStyle
         'Column Column
         'Row Row
+        'Center Center
         'Card Card
+        'Expanded Expanded
         'Padding Padding
         'SizedBox SizedBox
         'Container Container
         'ElevatedButton ElevatedButton
+        'FloatingActionButton FloatingActionButton
+        'Icon Icon
+        'SingleChildScrollView SingleChildScrollView
+        'DataColumn DataColumn
+        'DataCell DataCell
+        'DataRow DataRow
+        'DataTable DataTable
+        'GridView.count GridView.count
+        'DefaultTabController DefaultTabController
+        'TabBar TabBar
+        'TabBarView TabBarView
+        'Tab Tab
         'EdgeInsets.all EdgeInsets.all
+        'Axis.horizontal m/Axis.horizontal
         'MainAxisSize.min m/MainAxisSize.min
         'CrossAxisAlignment.center m/CrossAxisAlignment.center
         'FontWeight.bold m/FontWeight.bold
+        'Icons.add m/Icons.add
+        'Icons.directions_car m/Icons.directions_car
+        'Icons.directions_transit m/Icons.directions_transit
+        'Icons.directions_bike m/Icons.directions_bike
         'Colors.red m/Colors.red
         'Colors.blue m/Colors.blue
         'Colors.green m/Colors.green
