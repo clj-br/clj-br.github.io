@@ -1,0 +1,251 @@
+(ns repl.app
+  (:require ["package:flutter/material.dart" :as m]
+            ["package:flutter_html/flutter_html.dart" :as html]
+            [cljd.flutter :as f]
+            [clojure.string :as str]
+            [sci.core :as sci]))
+
+(def links
+  [{:title "Grupo no Telegram" :href "https://t.me/clojurebrasil"}
+   {:title "Servidor do Discord" :href "https://discord.gg/UTxeA9tHnd"}
+   {:title "Canal no YouTube" :href "https://www.youtube.com/@clojure-br"}
+   {:title "Meetup" :href "https://www.meetup.com/clojure-br/"}
+   {:title "Duvidas e discussoes" :href "https://github.com/clj-br/forum/discussions"}
+   {:title "Vagas e oportunidades" :href "https://github.com/clj-br/vagas"}])
+
+(def require-line
+  "(ns app\n  (:require [\"package:flutter/material.dart\" :as m]\n            [cljd.flutter :as f]\n            [clj-br.hiccup :as h]))\n\n")
+
+(defn escape-html [s]
+  (-> (str s)
+      (str/replace "&" "&amp;")
+      (str/replace "<" "&lt;")
+      (str/replace ">" "&gt;")
+      (str/replace "\"" "&quot;")
+      (str/replace "'" "&#39;")))
+
+(defn attrs->html [attrs]
+  (apply str
+         (for [[k v] attrs
+               :when (some? v)]
+           (str " " (name k) "=\"" (escape-html v) "\""))))
+
+(declare hiccup->html)
+
+(defn node->html [node]
+  (cond
+    (nil? node) ""
+    (string? node) (escape-html node)
+    (number? node) (str node)
+    (keyword? node) (name node)
+    (seq? node) (apply str (map node->html node))
+    (vector? node) (hiccup->html node)
+    :else (escape-html node)))
+
+(defn hiccup->html [node]
+  (let [[tag maybe-attrs & children] node
+        attrs (if (map? maybe-attrs) maybe-attrs {})
+        children (if (map? maybe-attrs) children (cons maybe-attrs children))]
+    (str "<" (name tag) (attrs->html attrs) ">"
+         (apply str (map node->html children))
+         "</" (name tag) ">")))
+
+(defn hiccup-widget [node]
+  (html/Html .data (hiccup->html node)))
+
+(defn flutter-link [{:keys [title href]}]
+  (m/Container
+   .margin (m/EdgeInsets.only .bottom 8.0)
+   .child (m/Text (str title "\n" href)
+                  .style (m/TextStyle .fontSize 16.0
+                                      .color m/Colors.white))))
+
+(defn clj-br-flutter-view []
+  (m/Container
+   .padding (m/EdgeInsets.all 24.0)
+   .child
+   (m/Column
+    .mainAxisSize m/MainAxisSize.min
+    .crossAxisAlignment m/CrossAxisAlignment.center
+    .children
+    (vec
+     (concat
+      [(m/Image .image (m/AssetImage "resources/logo.png") .height 120.0)
+       (m/SizedBox .height 12.0)
+       (m/Text "Clojure Brasil"
+               .style (m/TextStyle .fontSize 32.0
+                                   .fontWeight m/FontWeight.bold))
+       (m/SizedBox .height 8.0)
+       (m/Text "Comunidade brasileira de Clojure"
+               .style (m/TextStyle .fontSize 18.0
+                                   .color m/Colors.white70))
+       (m/SizedBox .height 20.0)]
+      (map flutter-link links))))))
+
+(defn clj-br-hiccup []
+  [:div {:style "font-family: sans-serif; text-align: center; padding: 24px;"}
+   [:img {:src "assets/resources/logo.png" :style "height: 120px;"}]
+   [:h1 "Clojure Brasil"]
+   [:p "Comunidade brasileira de Clojure renderizada como Hiccup em flutter_html."]
+   [:ul {:style "list-style: none; padding: 0;"}
+    (for [{:keys [title href]} links]
+      [:li {:style "margin: 12px 0;"}
+       [:a {:href href} title]])]])
+
+(def examples
+  [["flutter web"
+    (str require-line "(m/Column\n .mainAxisSize m/MainAxisSize.min\n .children\n [(m/Text \"Flutter widget rendered by SCI\")\n  (m/Container .color m/Colors.blue\n              .padding (m/EdgeInsets.all 12.0)\n              .child (m/Text \"native Flutter web render\"))])")]
+   ["cljd layout"
+    (str require-line "(m/Card\n .child\n (m/Padding\n  .padding (m/EdgeInsets.all 16.0)\n  .child\n  (m/Column\n   .mainAxisSize m/MainAxisSize.min\n   .children\n   [(m/Text \"ClojureDart layout\")\n    (m/SizedBox .height 8.0)\n    (m/Row\n     .children\n     [(m/Container .color m/Colors.blue\n                   .padding (m/EdgeInsets.all 8.0)\n                   .child (m/Text \"A\"))\n      (m/SizedBox .width 8.0)\n      (m/Container .color m/Colors.green\n                   .padding (m/EdgeInsets.all 8.0)\n                   .child (m/Text \"B\"))])]))")]
+   ["cljd style"
+    (str require-line "(m/Container\n .padding (m/EdgeInsets.all 18.0)\n .color m/Colors.black87\n .child\n (m/Text \"Styled from SCI + ClojureDart\"\n         .style (m/TextStyle .fontSize 26.0\n                             .fontWeight m/FontWeight.bold\n                             .color m/Colors.greenAccent)))")]
+   ["cljd interop"
+    (str require-line "(m/Column\n .mainAxisSize m/MainAxisSize.min\n .children\n [(m/Text (.upper \"dart string method\"))\n  (m/Text (str \"length = \" (.-length \"clojuredart\")))\n  (m/Text (pr-str (map inc [1 2 3])))])")]
+   ["cljd counter"
+    (str require-line "(defonce n (atom 0))\n(f/watch n [c]\n (m/Column\n  .mainAxisSize m/MainAxisSize.min\n  .children\n  [(m/Text (str \"clicked \" c))\n   (m/ElevatedButton\n    .onPressed (fn [] (swap! n inc))\n    .child (m/Text \"increment\"))]))")]
+   ["clj-br flutter" "(clj-br.app/clj-br-flutter-view)"]
+   ["hiccup html"
+    (str require-line "(h/html\n [:div {:style \"padding: 16px; font-family: sans-serif;\"}\n  [:h2 \"Hiccup in flutter_html\"]\n  [:p \"This vector becomes HTML and is rendered by the Flutter Html widget.\"]\n  [:a {:href \"https://clojure.org\"} \"clojure.org\"]])")]
+   ["clj-br hiccup" "(clj-br.app/hiccup-widget (clj-br.app/clj-br-hiccup))"]])
+
+(defn make-ctx []
+  (let [Text (fn [data & {:keys [style]}]
+               (m/Text (str data)
+                       .style (or style
+                                  (m/TextStyle .fontSize 20.0
+                                               .color m/Colors.white))))
+        TextStyle (fn [& {:keys [fontSize color fontWeight]}]
+                    (m/TextStyle .fontSize fontSize
+                                 .color color
+                                 .fontWeight fontWeight))
+        Column (fn [& {:keys [children mainAxisSize crossAxisAlignment]}]
+                 (m/Column .mainAxisSize (or mainAxisSize m/MainAxisSize.min)
+                           .crossAxisAlignment (or crossAxisAlignment m/CrossAxisAlignment.center)
+                           .children (vec children)))
+        Row (fn [& {:keys [children]}]
+              (m/Row .mainAxisSize m/MainAxisSize.min .children (vec children)))
+        Card (fn [& {:keys [child]}]
+               (m/Card .child child))
+        Padding (fn [& {:keys [padding child]}]
+                  (m/Padding .padding padding .child child))
+        SizedBox (fn [& {:keys [height width child]}]
+                   (m/SizedBox .height height .width width .child child))
+        EdgeInsets.all (fn [value] (m/EdgeInsets.all value))
+        Container (fn [& {:keys [padding margin color child]}]
+                    (m/Container .padding padding
+                                 .margin margin
+                                 .color color
+                                 .child child))
+        ElevatedButton (fn [& {:keys [onPressed child]}]
+                         (m/Padding .padding (m/EdgeInsets.all 4.0)
+                                    .child (m/ElevatedButton .onPressed onPressed
+                                                             .child child)))
+        watch-fn (fn [a render] (f/widget :watch [v a] (render v)))]
+    (sci/init
+     {:namespaces
+      {"package:flutter/material.dart"
+       {'Text Text
+        'TextStyle TextStyle
+        'Column Column
+        'Row Row
+        'Card Card
+        'Padding Padding
+        'SizedBox SizedBox
+        'Container Container
+        'ElevatedButton ElevatedButton
+        'EdgeInsets.all EdgeInsets.all
+        'MainAxisSize.min m/MainAxisSize.min
+        'CrossAxisAlignment.center m/CrossAxisAlignment.center
+        'FontWeight.bold m/FontWeight.bold
+        'Colors.red m/Colors.red
+        'Colors.blue m/Colors.blue
+        'Colors.green m/Colors.green
+        'Colors.white m/Colors.white
+        'Colors.white70 m/Colors.white70
+        'Colors.black87 m/Colors.black87
+        'Colors.greenAccent m/Colors.greenAccent}
+       'cljd.flutter
+       {'watch (with-meta
+                 (fn [_&form _&env a bindings & body]
+                   (list watch-fn a (list* 'fn bindings body)))
+                 {:macro true})}
+       'clj-br.hiccup
+       {'html hiccup-widget
+        'render-html hiccup->html}
+       'clj-br.app
+       {'clj-br-flutter-view clj-br-flutter-view
+        'clj-br-hiccup clj-br-hiccup
+        'hiccup-widget hiccup-widget}}
+      :classes
+      {'String {:class String
+                :instance-methods {'upper (fn [s] (.toUpperCase (str s)))
+                                   'lower (fn [s] (.toLowerCase (str s)))}
+                :instance-fields {'length (fn [s] (.-length (str s)))}}}})))
+
+(defn eval! [ctx code]
+  (try {:value (sci/eval-string* ctx code)}
+       (catch Object e {:error (or (ex-message e) (str e))})))
+
+(defn result-widget [{:keys [value error]}]
+  (cond
+    error (m/Text (str "error: " error)
+                  .style (m/TextStyle .color m/Colors.redAccent))
+    (instance? m/Widget value) value
+    (vector? value) (hiccup-widget value)
+    :else (m/Text (pr-str value)
+                  .style (m/TextStyle .color m/Colors.greenAccent
+                                      .fontSize 18.0))))
+
+(defn main []
+  (let [result (atom {:value nil})
+        controller (m/TextEditingController .text (second (first examples)))
+        ctx (make-ctx)
+        run! (fn [] (reset! result (eval! ctx (.-text controller))))
+        example-buttons (fn []
+                          (m/Wrap
+                           .spacing 8.0
+                           .children
+                           (vec
+                            (for [[label code] examples]
+                              (m/OutlinedButton
+                               .onPressed (fn []
+                                            (set! (.-text controller) code)
+                                            (run!))
+                               .child (m/Text label))))))
+        editor (fn []
+                 (m/Column
+                  .crossAxisAlignment m/CrossAxisAlignment.stretch
+                  .children
+                  [(example-buttons)
+                   (m/SizedBox .height 12.0)
+                   (m/Expanded
+                    .child
+                    (m/TextField
+                     .controller controller
+                     .maxLines nil
+                     .expands true
+                     .style (m/TextStyle .color m/Colors.white
+                                         .fontFamily "monospace")
+                     .decoration (m/InputDecoration .border (m/OutlineInputBorder))))
+                   (m/SizedBox .height 8.0)
+                   (m/ElevatedButton .onPressed run! .child (m/Text "render"))]))
+        preview (fn []
+                  (m/SingleChildScrollView
+                   .padding (m/EdgeInsets.all 16.0)
+                   .child (f/widget :watch [r result] (result-widget r))))]
+    (run!)
+    (f/run
+      (m/MaterialApp .theme (m/ThemeData .brightness m/Brightness.dark))
+      .home
+      (m/Scaffold
+       .appBar (m/AppBar .title (m/Text "Clojure Brasil SCI Flutter Web"))
+       .body
+       (m/Row .crossAxisAlignment m/CrossAxisAlignment.stretch
+              .children
+              [(m/Expanded
+                .child
+                (m/Padding
+                 .padding (m/EdgeInsets.all 12.0)
+                 .child (editor)))
+               (m/VerticalDivider .width 1.0)
+               (m/Expanded .child (preview))])))))

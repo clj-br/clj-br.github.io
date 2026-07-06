@@ -1,0 +1,31 @@
+[tools]
+clojure = "1.11.1.1165"
+flutter = "3.44.0-stable"
+
+[tasks.clj-repl]
+description = "Start a Clojure REPL with the project deps."
+run = "clojure"
+
+[tasks.static-site]
+description = "Run the current Pedestal static-site generator/server."
+run = "clojure -M:run"
+
+[tasks.flutter-init]
+description = "Initialize generated Flutter/ClojureDart project files."
+run = "clojure -M:cljd init"
+
+[tasks.flutter-compile]
+description = "Compile the ClojureDart Flutter web app."
+run = "clojure -M:cljd compile repl.app"
+
+[tasks.flutter-web]
+description = "Run the ClojureDart Flutter web app in Chrome with hot reload."
+run = "clojure -M:cljd flutter -d chrome"
+
+[tasks.flutter-run]
+description = "Run the generated Flutter web app in Chrome."
+run = "flutter run -d chrome"
+
+[tasks.flutter-pub-get]
+description = "Resolve Flutter/Dart packages."
+run = "flutter pub get"
