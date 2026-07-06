@@ -1,11 +1,11 @@
 {
-    "name": "cljd_clj_br_github_io",
-    "short_name": "cljd_clj_br_github_io",
+    "name": "Clojure Brasil",
+    "short_name": "clj-br",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Clojure Brasil Flutter web playground.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

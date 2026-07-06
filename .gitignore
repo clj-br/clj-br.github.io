@@ -56,6 +56,7 @@ app.*.map.json
 /pubspec.lock
 /.gitattributes
 /analysis_options.yaml
+/.last_build_id
 
 # ClojureDart
 /.cpcache/

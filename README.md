@@ -19,6 +19,35 @@ Durante o desenvolvimento:
 mise run flutter-web
 ```
 
+Para abrir em outro navegador, nao abra `web/index.html` diretamente com
+`file://`. O diretorio `web/` e entrada de build do Flutter; ele precisa
+ser servido por HTTP. Use:
+
+```shell
+mise run flutter-web-server
+```
+
+Depois abra `http://localhost:8081`.
+
+Para gerar a versao estatica final:
+
+```shell
+mise run flutter-build-web
+```
+
+O resultado fica em `build/web/`.
+
+Para publicar no GitHub Pages deste repositorio (`clj-br.github.io`),
+gere o Flutter web e copie o resultado para a raiz:
+
+```shell
+mise run github-pages-build
+```
+
+Esse comando sobrescreve o `index.html` da raiz com o HTML gerado pelo
+Flutter e copia os assets necessarios para que
+`https://clj-br.github.io/` carregue o app.
+
 O REPL SCI dentro do app renderiza widgets Flutter diretamente e tambem
 renderiza vetores Hiccup em um widget `flutter_html`.
 
