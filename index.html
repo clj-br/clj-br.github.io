@@ -1,171 +1,75 @@
 <!DOCTYPE html>
-<html lang="pt-br"><head><meta charset="UTF-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="Clojure Brasil" name="description"><meta content="#1793d1" name="theme-color"><meta content="website" property="og:type"><meta content="Comunidade Clojure Brasil" property="og:description"><meta content="Clojure Brasil" property="og:title"><meta content="https://clj-br.github.io/" property="og:url"><meta content="https://clj-br.github.io//resources/logo.svg" property="og:image"><title>Clojure Brasil</title><link href="data:application/json,%7B%22theme_color%22%3A%22%231793d1%22%2C%22start_url%22%3A%22https%3A%2F%2Fclj-br.github.io%2F%22%2C%22name%22%3A%22Clojure+Brasil%22%2C%22background_color%22%3A%22%234d4d4d%22%2C%22short_name%22%3A%22clj-br%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fclj-br.github.io%2F%2Fresources%2Flogo.svg%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Fclj-br.github.io%2F%2Fresources%2Flogo.svg%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%2C%22display%22%3A%22minimal-ui%22%2C%22manifest_version%22%3A2%2C%22version%22%3A%221%22%7D" rel="manifest"><link href="https://clj-br.github.io/" rel="canonical"><link href="resources/logo.svg" rel="icon"><style>
-headers > img {
-  max-width: 20vh;
-  max-height: 20vh;
-}
-body {
-  text-align: center;
-  padding: 2vh;
-  max-width: 38em;
-  margin: auto;
-}
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
 
-ul {
-  padding: 0;
-  list-style-type: none;
-}
-li {
-  padding: 1em;
-}
-</style></head><body><headers><img alt="Logotipo da clojure Brasil, que mistura o logotipo original, inspirado em yin yang, com o formato de uma arara, mantendo as cores originais: tons leves de azul e verde." src="resources/logo.svg"></headers><h1>Clojure Brasil</h1><div id="playground"><ul><li><a href="https://t.me/clojurebrasil" rel="noreferrer noopener" target="_blank">Grupo no Telegram</a></li><li><a href="https://discord.gg/UTxeA9tHnd" rel="noreferrer noopener" target="_blank">Servidor do Discord</a></li><li><a href="https://www.youtube.com/@clojure-br" rel="noreferrer noopener" target="_blank">Canal no YouTube</a></li><li><a href="https://www.meetup.com/clojure-br/" rel="noreferrer noopener" target="_blank">Meetup</a></li><li><a href="https://github.com/clj-br/forum/discussions" rel="noreferrer noopener" target="_blank">Duvidas e discussões</a></li><li><a href="https://github.com/clj-br/vagas" rel="noreferrer noopener" target="_blank">Vagas e oportunidades de trabalho</a></li></ul></div><p>Comece a aprender agora mesmo!</p><ul style="display:flex;flex-wrap:wrap;justify-content:center;"><li><button data-target="editor" data-value="[:ul
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://t.me/clojurebrasil&quot;}
-   &quot;Grupo no Telegram&quot;]]
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://discord.gg/UTxeA9tHnd&quot;}
-   &quot;Servidor do Discord&quot;]]
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://www.youtube.com/@clojure-br&quot;}
-   &quot;Canal no YouTube&quot;]]
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://www.meetup.com/clojure-br/&quot;}
-   &quot;Meetup&quot;]]
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://github.com/clj-br/forum/discussions&quot;}
-   &quot;Duvidas e discussões&quot;]]
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://github.com/clj-br/vagas&quot;}
-   &quot;Vagas e oportunidades de trabalho&quot;]]]
-" onClick="document.getElementById(this.dataset.target).value = this.dataset.value;
-document.getElementById(this.dataset.target).onkeyup()">Website</button></li><li><button data-target="editor" data-value="(+ 1 2)
-" onClick="document.getElementById(this.dataset.target).value = this.dataset.value;
-document.getElementById(this.dataset.target).onkeyup()">Soma simples</button></li><li><button data-target="editor" data-value="(require &apos;[reagent.core :as r])
-(def *n (r/atom 0))
-(defn
- contador
- []
- [:div
-  [:div (str &quot;Contador: &quot; @*n)]
-  [:button {:onClick (fn [] (swap! *n inc))} &quot;incrementar&quot;]])
-" onClick="document.getElementById(this.dataset.target).value = this.dataset.value;
-document.getElementById(this.dataset.target).onkeyup()">Contador</button></li><li><button data-target="editor" data-value="
-(require &apos;[reagent.core :as r])
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
 
-(def *notas (r/atom {0 {:nota &quot;Conhecer Clojure&quot; :feito? true}
-                     1 {:nota &quot;Aprender Clojure&quot;}}))
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
 
-(def *nova-nota (r/atom &quot;&quot;))
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
 
-(defn ui-root []
-  [:div
-   (for [[id {:keys [nota feito?]}] @*notas]
-    [:div
-     {:key id}
-     [:input
-      {:type &quot;checkbox&quot;
-       :on-change #(swap! *notas update-in [id :feito?] not)
-       :checked feito?}]
-     nota
-     (when feito?
-       [:button {:on-click (fn [] (swap! *notas dissoc id))} &quot;x&quot;])])
-   [:input {:value @*nova-nota
-            :on-change (fn [evt] (reset! *nova-nota (-&gt; evt .-target .-value)))}]
-   [:button {:on-click (fn []
-                         (swap! *notas assoc (random-uuid) {:nota @*nova-nota})
-                         (reset! *nova-nota &quot;&quot;))}
-    &quot;+&quot;]])
- " onClick="document.getElementById(this.dataset.target).value = this.dataset.value;
-document.getElementById(this.dataset.target).onkeyup()">Aplicativo de notas</button></li></ul><textarea autocomplete="off" id="editor" onkeyup="this.dataset.state == &apos;done&apos; ? this.dataset.state = &apos;idle&apos; : null" rows="20" style="width:100%;">[:ul
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://t.me/clojurebrasil&quot;}
-   &quot;Grupo no Telegram&quot;]]
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://discord.gg/UTxeA9tHnd&quot;}
-   &quot;Servidor do Discord&quot;]]
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://www.youtube.com/@clojure-br&quot;}
-   &quot;Canal no YouTube&quot;]]
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://www.meetup.com/clojure-br/&quot;}
-   &quot;Meetup&quot;]]
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://github.com/clj-br/forum/discussions&quot;}
-   &quot;Duvidas e discussões&quot;]]
- [:li
-  [:a
-   {:target &quot;_blank&quot;,
-    :rel &quot;noreferrer noopener&quot;,
-    :href &quot;https://github.com/clj-br/vagas&quot;}
-   &quot;Vagas e oportunidades de trabalho&quot;]]]
-</textarea><div id="playground"></div><pre id="stderr"></pre><script src="https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.2/js/scittle.js" type="application/javascript"></script><script crossorigin="true" src="https://unpkg.com/react@17/umd/react.production.min.js"></script><script crossorigin="true" src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script><script src="https://cdn.jsdelivr.net/gh/borkdude/scittle@0.0.2/js/scittle.reagent.js" type="application/javascript"></script><script type="application/x-scittle">(require '[reagent.core :as r] '[reagent.dom :as rdom])
-(defn
- render
- []
- (let
-  [stderr
-   (.getElementById js/document "stderr")
-   editor
-   (.getElementById js/document "editor")]
-  (when
-   (-> editor .-dataset .-state #{"idle"})
-   (set! (-> editor .-dataset .-state) "loading")
-   (try
-    (let
-     [component
-      (-> js/window .-scittle .-core (.eval_string (.-value editor)))]
-     (rdom/render
-      (cond
-       (fn? component)
-       [component]
-       (var? component)
-       [component]
-       (vector? component)
-       component
-       :else
-       [:pre (pr-str component)])
-      (.getElementById js/document "playground"))
-     (set! (.-innerText stderr) ""))
-    (catch
-     :default
-     ex
-     (set!
-      (.-innerText stderr)
-      (str (ex-message ex) "\n" (str (ex-data ex)))))))
-  (set! (-> editor .-dataset .-state) "done"))
- (js/setTimeout render 1000))
-(render)
-</script></body></html>
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Clojure Brasil Flutter web playground.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Clojure Brasil">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Clojure Brasil</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <script>
+    (function () {
+      function loadFlutter() {
+        var script = document.createElement("script");
+        script.src = "flutter_bootstrap.js?v=" + Date.now();
+        script.async = true;
+        document.body.appendChild(script);
+      }
+
+      async function clearOldFlutterState() {
+        if ("serviceWorker" in navigator) {
+          var registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map(function (registration) {
+            return registration.unregister();
+          }));
+        }
+
+        if ("caches" in window) {
+          var cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(function (cacheName) {
+            return caches.delete(cacheName);
+          }));
+        }
+      }
+
+      function start() {
+        clearOldFlutterState().catch(function (error) {
+          console.warn("Failed to clear old Flutter cache state:", error);
+        }).finally(loadFlutter);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start, {once: true});
+      } else {
+        start();
+      }
+    }());
+  </script>
+</body>
+</html>

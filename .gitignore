@@ -1,0 +1,82 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.clj-kondo/
+.lsp/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# cljd + flutter generated output and scaffolding
+/lib/
+/android/
+/ios/
+/macos/
+/linux/
+/windows/
+/test/
+/.metadata
+/pubspec.lock
+/.gitattributes
+/analysis_options.yaml
+/.last_build_id
+
+# ClojureDart
+/.cpcache/
+/.clojuredart/
+
+# GitHub Pages build output, generated at the repo root by
+# `mise run github-pages-build` (source of truth is web/ + src/). Not
+# tracked day-to-day; when actually publishing, force-add these with
+# `git add -f` before committing.
+/index.html
+/main.dart.js
+/main.dart.js.map
+/flutter.js
+/flutter_bootstrap.js
+/flutter_service_worker.js
+/manifest.json
+/version.json
+/favicon.png
+/assets/
+/canvaskit/
+/icons/

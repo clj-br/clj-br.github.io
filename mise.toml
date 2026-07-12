@@ -1,0 +1,39 @@
+[tools]
+clojure = "1.11.1.1165"
+flutter = "3.44.0-stable"
+
+[tasks.clj-repl]
+description = "Start a Clojure REPL with the project deps."
+run = "clojure"
+
+[tasks.flutter-init]
+description = "Initialize generated Flutter/ClojureDart project files."
+run = "clojure -M:cljd init"
+
+[tasks.flutter-compile]
+description = "Compile the ClojureDart Flutter web app."
+run = "clojure -M:cljd compile clj-br.website"
+
+[tasks.flutter-build-web]
+description = "Build the Flutter web app into build/web."
+run = "flutter build web"
+
+[tasks.github-pages-build]
+description = "Build Flutter web and copy the generated site to the GitHub Pages root."
+run = "bash scripts/publish_flutter_to_pages.sh"
+
+[tasks.flutter-web]
+description = "Run the ClojureDart Flutter web app in Chrome with hot reload."
+run = "clojure -M:cljd flutter -d chrome"
+
+[tasks.flutter-web-server]
+description = "Serve the Flutter web app over HTTP for any browser."
+run = "flutter run -d web-server --web-port 8081"
+
+[tasks.flutter-run]
+description = "Run the generated Flutter web app in Chrome."
+run = "flutter run -d chrome"
+
+[tasks.flutter-pub-get]
+description = "Resolve Flutter/Dart packages."
+run = "flutter pub get"

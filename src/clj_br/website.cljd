@@ -1,0 +1,699 @@
+(ns clj-br.website
+  (:require
+    ["package:flutter/material.dart" :as m]
+    ["package:flutter/widgets.dart" :as w]
+    ["dart:async" :as async]
+    ["dart:html" :as dom]
+    ["dart:ui_web" :as ui-web]
+    [cljd.flutter :as f]
+    [sci.core :as sci]))
+
+(def counter-cljd-state
+  "A host-created (real ClojureDart) atom, dedicated to the ClojureDart
+   widget mode's Counter sample. Atoms created *inside* the vendored SCI
+   sandbox (e.g. via `(state/atom 0)`) don't work correctly with
+   `f/widget`'s `:watch` in this ClojureDart-widget world -- only
+   host-created atoms passed in from the outside do. The real
+   Scittle+Reagent+React runtime used by the Hiccup/Reagent tab is a
+   separate JS interpreter and isn't affected by this; samples there can
+   freely create their own `(r/atom ...)`."
+  (atom 0))
+
+(def todo-cljd-state
+  (atom [{:text "Entrar no Telegram" :done true}
+         {:text "Participar do Discord" :done false}
+         {:text "Assistir o canal" :done false}]))
+
+(def todo-cljd-draft
+  (atom ""))
+
+(def todo-cljd-draft-controller
+  (m/TextEditingController))
+
+(defn add-todo-cljd-io! []
+  (let [text @todo-cljd-draft]
+    (when (seq text)
+      (swap! todo-cljd-state conj {:text text :done false})
+      (reset! todo-cljd-draft "")
+      (set! (.-text ^m/TextEditingController todo-cljd-draft-controller) ""))))
+
+(defn callback [{:keys [handler pass-value?]}]
+  (when handler
+    (if pass-value?
+      (fn [value]
+        (handler value))
+      (fn []
+        (handler)))))
+
+(def site-model
+  {:title    "Clojure Brasil"
+   :subtitle "Comunidade brasileira de Clojure"
+   :logo     "resources/logo.png"
+   :links    [{:titulo "Grupo no Clojurians"
+               :href   "https://join.slack.com/t/clojurians/shared_invite/zt-zjqnhvdj-HSQGSyA79T5qdMb9GwqD1A"}
+              {:title "Grupo no Telegram"
+               :href  "https://t.me/clojurebrasil"}
+              {:title "Servidor do Discord"
+               :href  "https://discord.gg/UTxeA9tHnd"}
+              {:title "Canal no YouTube"
+               :href  "https://www.youtube.com/@clojure-br"}
+              {:title "Meetup"
+               :href  "https://www.meetup.com/clojure-br/"}
+              {:title "Duvidas e discussoes"
+               :href  "https://github.com/clj-br/forum/discussions"}
+              {:title "Vagas e oportunidades"
+               :href  "https://github.com/clj-br/vagas"}]})
+
+(defn value-widget [value]
+  (cond
+    (instance? m/Widget value)
+    value
+
+    :else
+    (m/Text (pr-str value)
+      .style (m/TextStyle .fontSize 14.0
+               .color m/Colors.black54))))
+
+(declare flutter-link)
+
+(defn community-site-widget
+  "Styled to look like the plain, unstyled markup of clojurebrasil.com.br
+   (black serif-weight title, default-blue underlined links, no href
+   subtitle line), so this native widget and the real Reagent tab read as
+   the same page rather than two different-looking apps."
+  [{:keys [title logo links]}]
+  (m/Column
+    .mainAxisSize m/MainAxisSize.min
+    .crossAxisAlignment m/CrossAxisAlignment.center
+    .children
+    [(m/Image .image (m/AssetImage logo) .height 112.0)
+     (m/SizedBox .height 12.0)
+     (m/Text title
+       .textAlign m/TextAlign.center
+       .style (m/TextStyle .fontSize 34.0
+                .fontWeight m/FontWeight.bold
+                .color m/Colors.black))
+     (m/SizedBox .height 20.0)
+     (m/Column
+       .mainAxisSize m/MainAxisSize.min
+       .crossAxisAlignment m/CrossAxisAlignment.center
+       .children (vec (map flutter-link links)))]))
+
+(defn community-hiccup-widget [model]
+  (community-site-widget model))
+
+(defn flutter-link [{:keys [title]}]
+  (m/Padding
+    .padding (m/EdgeInsets.symmetric .vertical 8.0)
+    .child
+    (m/Text title
+      .textAlign m/TextAlign.center
+      .style (m/TextStyle .fontSize 16.0
+               .color m/Colors.blue
+               .decoration m/TextDecoration.underline))))
+
+(defn community-flutter-widget
+  "A native ClojureDart Flutter component for the same site model."
+  [model]
+  (community-site-widget model))
+
+(def site-hiccup-source
+  "[:ul
+ [:li
+  [:a
+   {:target \"_blank\",
+    :rel \"noreferrer noopener\",
+    :href \"https://t.me/clojurebrasil\"}
+   \"Grupo no Telegram\"]]
+ [:li
+  [:a
+   {:target \"_blank\",
+    :rel \"noreferrer noopener\",
+    :href \"https://discord.gg/UTxeA9tHnd\"}
+   \"Servidor do Discord\"]]
+ [:li
+  [:a
+   {:target \"_blank\",
+    :rel \"noreferrer noopener\",
+    :href \"https://www.youtube.com/@clojure-br\"}
+   \"Canal no YouTube\"]]
+ [:li
+  [:a
+   {:target \"_blank\",
+    :rel \"noreferrer noopener\",
+    :href \"https://www.meetup.com/clojure-br/\"}
+   \"Meetup\"]]
+ [:li
+  [:a
+   {:target \"_blank\",
+    :rel \"noreferrer noopener\",
+    :href \"https://github.com/clj-br/forum/discussions\"}
+   \"Duvidas e discussões\"]]
+ [:li
+  [:a
+   {:target \"_blank\",
+    :rel \"noreferrer noopener\",
+    :href \"https://github.com/clj-br/vagas\"}
+   \"Vagas e oportunidades de trabalho\"]]]
+")
+
+(def site-cljd-source
+  "(require '[\"package:flutter/material.dart\" :as m])
+
+(def links
+  [{:title \"Grupo no Telegram\" :href \"https://t.me/clojurebrasil\"}
+   {:title \"Servidor do Discord\" :href \"https://discord.gg/UTxeA9tHnd\"}
+   {:title \"Canal no YouTube\" :href \"https://www.youtube.com/@clojure-br\"}
+   {:title \"Meetup\" :href \"https://www.meetup.com/clojure-br/\"}
+   {:title \"Duvidas e discussoes\" :href \"https://github.com/clj-br/forum/discussions\"}
+   {:title \"Vagas e oportunidades\" :href \"https://github.com/clj-br/vagas\"}])
+
+(defn link-view [{:keys [title]}]
+  (m/Padding
+   .padding (m/EdgeInsets.symmetric .vertical 8.0)
+   .child
+   (m/Text title
+           .textAlign m/TextAlign.center
+           .style (m/TextStyle .fontSize 16.0
+                   .color m/Colors.blue
+                   .decoration m/TextDecoration.underline))))
+
+(m/Column
+ .mainAxisSize m/MainAxisSize.min
+ .crossAxisAlignment m/CrossAxisAlignment.center
+ .children (vec (map link-view links)))
+")
+
+(def counter-hiccup-source
+  "(require '[reagent.core :as r])
+(def *n (r/atom 0))
+(defn
+ contador
+ []
+ [:div
+  [:div (str \"Contador: \" @*n)]
+  [:button {:onClick (fn [] (swap! *n inc))} \"incrementar\"]])
+")
+
+(def counter-cljd-source
+  "(require '[\"package:flutter/material.dart\" :as m]
+         '[cljd.flutter :as f]
+         '[clj-br.state :as state])
+
+(f/widget
+ :watch [value state/counter]
+ (m/Column
+   .mainAxisSize m/MainAxisSize.min
+   .crossAxisAlignment m/CrossAxisAlignment.center
+   .children
+   [(m/Text (str \"Contador: \" value)
+            .textAlign m/TextAlign.center
+            .style (m/TextStyle .fontSize 16.0 .color m/Colors.black))
+    (m/SizedBox .height 8.0)
+    (m/OutlinedButton
+     .onPressed (fn [] (swap! state/counter inc))
+     .child (m/Text \"incrementar\"))]))
+")
+
+(def todo-hiccup-source
+  "
+(require '[reagent.core :as r])
+
+(def *notas (r/atom {0 {:nota \"Conhecer Clojure\" :feito? true}
+                     1 {:nota \"Aprender Clojure\"}}))
+
+(def *nova-nota (r/atom \"\"))
+
+(defn ui-root []
+  [:div
+   (for [[id {:keys [nota feito?]}] @*notas]
+    [:div
+     {:key id}
+     [:input
+      {:type \"checkbox\"
+       :on-change #(swap! *notas update-in [id :feito?] not)
+       :checked feito?}]
+     nota
+     (when feito?
+       [:button {:on-click (fn [] (swap! *notas dissoc id))} \"x\"])])
+   [:input {:value @*nova-nota
+            :on-change (fn [evt] (reset! *nova-nota (-> evt .-target .-value)))}]
+   [:button {:on-click (fn []
+                         (swap! *notas assoc (random-uuid) {:nota @*nova-nota})
+                         (reset! *nova-nota \"\"))}
+    \"+\"]])
+ ")
+
+(def todo-cljd-source
+  "(require '[\"package:flutter/material.dart\" :as m]
+         '[cljd.flutter :as f]
+         '[clj-br.state :as state])
+
+(defn todo-row [idx {:keys [text done]}]
+  (m/Row
+   .mainAxisSize m/MainAxisSize.min
+   .children
+   [(m/Checkbox
+     .value done
+     .onChanged (fn [_] (swap! state/todos update-in [idx :done] not)))
+    (m/Text text
+     .style (m/TextStyle
+             .decoration (when done m/TextDecoration.lineThrough)
+             .color (if done m/Colors.grey m/Colors.black)))]))
+
+(f/widget
+ :watch [todos state/todos
+         draft state/draft]
+ (m/Column
+  .mainAxisSize m/MainAxisSize.min
+  .crossAxisAlignment m/CrossAxisAlignment.center
+  .children
+  (vec
+   (concat
+    [(m/SizedBox .height 8.0)]
+    (map-indexed todo-row todos)
+    [(m/SizedBox .height 8.0)
+     (m/Row
+      .mainAxisSize m/MainAxisSize.min
+      .children
+      [(m/SizedBox
+        .width 220.0
+        .child
+        (m/TextField
+         .controller state/draft-controller
+         .onChanged (fn [text] (reset! state/draft text))
+         .onSubmitted (fn [_] (state/add-todo!))
+         .decoration
+         (m/InputDecoration
+          .isDense true
+          .border (m/OutlineInputBorder)
+          .contentPadding (m/EdgeInsets.symmetric .horizontal 10.0 .vertical 8.0))))
+       (m/SizedBox .width 6.0)
+       (m/OutlinedButton
+        .onPressed (fn [] (state/add-todo!))
+        .child (m/Text \"+\"))])]))))
+")
+
+(def samples
+  {:site    {:label  "Site"
+             :hiccup site-hiccup-source
+             :cljd   site-cljd-source}
+   :counter {:label  "Counter"
+             :hiccup counter-hiccup-source
+             :cljd   counter-cljd-source}
+   :todo    {:label  "Todo list"
+             :hiccup todo-hiccup-source
+             :cljd   todo-cljd-source}})
+
+(def sample-order [:site :counter :todo])
+
+(defn source-for [sample mode]
+  (get-in samples [sample mode]))
+
+(defn eval-source-io!
+  [{:keys [sci state]} source]
+  (swap! state assoc :result
+    (try
+      {:value (sci/eval-string* sci source)}
+      (catch Object e
+        {:error (or (ex-message e) (str e))}))))
+
+(def playground-view-type
+  "cljbr-playground")
+
+(defn register-playground-view!
+  "Registers a factory that creates a fresh <div id=\"cljbr-playground\">
+   per HtmlElementView instance (see the render loop in web/index.html),
+   so the real DOM rendered by the Scittle+Reagent+React runtime can be
+   shown inside the widget tree. A fresh element is required each time
+   rather than reusing one fixed node, since Flutter detaches the previous
+   element whenever the Hiccup/Reagent tab is unmounted (e.g. switching to
+   the ClojureDart widget tab and back)."
+  []
+  (.registerViewFactory ui-web/platformViewRegistry playground-view-type
+    (fn [^int _view-id]
+      (let [^dom/Element el (.createElement dom/document "div")]
+        (set! (.-id el) "cljbr-playground")
+        el))))
+
+(def min-playground-height 60.0)
+
+(defn watch-playground-height-io!
+  "Flutter can't size an HtmlElementView to its DOM content automatically --
+   the platform view needs an explicit pixel height -- so this polls the
+   real #cljbr-playground element's scrollHeight directly (dart:html's
+   `document` is available from host code too, no JS bridge needed) and
+   keeps :playground-height in state in sync with it, so the SizedBox
+   wrapping the HtmlElementView can track the actual rendered content."
+  [{:keys [state]}]
+  (async/Timer.periodic (Duration .milliseconds 200)
+    (fn [_timer]
+      (when-some [el (.getElementById dom/document "cljbr-playground")]
+        (let [height (max min-playground-height (.toDouble (.-scrollHeight el)))]
+          (when (not= height (:playground-height @state))
+            (swap! state assoc :playground-height height)))))))
+
+(defn push-hiccup-source-io!
+  "Feeds `source` to the real Scittle+Reagent+React runtime embedded in
+   web/index.html by writing it into the hidden #cljbr-editor textarea that
+   its render loop polls, instead of running it through our own vendored
+   SCI (which has no notion of reagent.core/reagent.dom)."
+  [_ctx source]
+  (let [^dom/TextAreaElement editor (.getElementById dom/document "cljbr-editor")]
+    (set! (.-value editor) source)
+    (.setAttribute editor "data-state" "idle")))
+
+(defn eval-active-source-io!
+  [{:keys [state] :as ctx} source]
+  (if (= :hiccup (:active-mode @state))
+    (push-hiccup-source-io! ctx source)
+    (eval-source-io! ctx source)))
+
+(defn result-widget [{:keys [value error]}]
+  (cond
+    error
+    (m/Text (str "SCI error: " error)
+      .style (m/TextStyle .fontSize 14.0
+               .color m/Colors.red))
+
+    :else
+    (value-widget value)))
+
+(defn widget-watch-pairs [bindings]
+  (map vec (partition 2 bindings)))
+
+(defn expand-widget-clauses
+  "Expands the clauses of an (f/widget ...) form into nested code, mirroring
+   the keyword-clause shape of the real cljd.flutter/widget macro (a subset:
+   :let, :context and :watch are supported)."
+  [watch-fn clauses]
+  (if (keyword? (first clauses))
+    (let [[kw arg & more] clauses]
+      (case kw
+        :let (list 'let arg (expand-widget-clauses watch-fn more))
+        :context (list 'let [arg nil] (expand-widget-clauses watch-fn more))
+        :watch (reduce (fn [body [sym atom-expr]]
+                         (list watch-fn atom-expr (list 'fn [sym] body)))
+                 (expand-widget-clauses watch-fn more)
+                 (reverse (widget-watch-pairs arg)))
+        (throw (ex-info (str "Unsupported cljd.flutter/widget clause: " kw) {}))))
+    (cons 'do clauses)))
+
+(defn build-sci-env []
+  (let [Text (fn [data & {:keys [style textAlign]}]
+               (m/Text (if (nil? data) "" (str data))
+                 .textAlign textAlign
+                 .style style))
+        TextStyle (fn [& {:keys [fontSize
+                                 fontWeight
+                                 color
+                                 decoration]}]
+                    (m/TextStyle
+                      .fontSize fontSize
+                      .fontWeight fontWeight
+                      .color color
+                      .decoration decoration))
+        Column (fn [& {:keys [children mainAxisSize crossAxisAlignment]}]
+                 (m/Column .mainAxisSize (or mainAxisSize m/MainAxisSize.min)
+                   .crossAxisAlignment (or crossAxisAlignment m/CrossAxisAlignment.center)
+                   .children (vec children)))
+        Row (fn [& {:keys [children mainAxisSize crossAxisAlignment]}]
+              (m/Row .mainAxisSize (or mainAxisSize m/MainAxisSize.min)
+                .crossAxisAlignment (or crossAxisAlignment m/CrossAxisAlignment.center)
+                .children (vec (remove nil? children))))
+        SizedBox (fn [& {:keys [height width child]}]
+                   (m/SizedBox .height height .width width .child child))
+        Container (fn [& {:keys [padding margin child]}]
+                    (m/Container .padding padding
+                      .margin margin
+                      .child child))
+        Padding (fn [& {:keys [padding child]}]
+                  (m/Padding .padding padding .child child))
+        Image (fn [& {:keys [image height]}]
+                (m/Image .image image .height height))
+        AssetImage (fn [asset] (m/AssetImage asset))
+        EdgeInsets.all (fn [value] (m/EdgeInsets.all value))
+        EdgeInsets.symmetric (fn [& {:keys [horizontal vertical]}]
+                               (m/EdgeInsets.symmetric .horizontal (or horizontal 0.0)
+                                 .vertical (or vertical 0.0)))
+        ElevatedButton (fn [& {:keys [onPressed child]}]
+                         (m/ElevatedButton
+                           .onPressed (callback {:handler onPressed})
+                           .child child))
+        TextButton (fn [& {:keys [onPressed child]}]
+                     (m/TextButton
+                       .onPressed (callback {:handler onPressed})
+                       .child child))
+        OutlinedButton (fn [& {:keys [onPressed child]}]
+                         (m/OutlinedButton
+                           .onPressed (callback {:handler onPressed})
+                           .child child))
+        Checkbox (fn [& {:keys [value onChanged]}]
+                   (m/Checkbox
+                     .value value
+                     .onChanged (callback {:handler     onChanged
+                                           :pass-value? true})))
+        TextField (fn [& {:keys [controller onChanged onSubmitted decoration]}]
+                    (m/TextField
+                      .controller controller
+                      .onChanged (callback {:handler     onChanged
+                                            :pass-value? true})
+                      .onSubmitted (callback {:handler     onSubmitted
+                                              :pass-value? true})
+                      .decoration decoration))
+        InputDecoration (fn [& {:keys [isDense border contentPadding]}]
+                          (m/InputDecoration
+                            .isDense isDense
+                            .border border
+                            .contentPadding contentPadding))
+        OutlineInputBorder (fn [] (m/OutlineInputBorder))
+        TextEditingController (fn [] (m/TextEditingController))
+        Color (fn [value] (m/Color value))
+        watch-fn (fn [a render] (f/widget :watch [_ a] (value-widget (render @a))))]
+    (sci/init
+      {:namespaces
+       {'clj-br.site                    {'model   site-model
+                                         'view    community-site-widget
+                                         'html    community-hiccup-widget
+                                         'flutter community-flutter-widget}
+        ;; Host-created atoms, one dedicated set per ClojureDart-widget
+        ;; sample (not shared across samples) -- atoms created *inside* the
+        ;; sandbox don't work correctly with `f/widget`'s `:watch` here, so
+        ;; each sample's state is instead created in host code and just
+        ;; exposed in. See `counter-cljd-state`'s docstring for why.
+        'clj-br.state                   {'counter               counter-cljd-state
+                                         'todos                 todo-cljd-state
+                                         'draft                 todo-cljd-draft
+                                         'draft-controller      todo-cljd-draft-controller
+                                         'add-todo!             (fn [] (add-todo-cljd-io!))}
+        ;; `atom` here is the real host (ClojureDart) atom constructor. It's
+        ;; only exposed to the real Scittle+Reagent+React runtime (a separate
+        ;; JS interpreter, not affected by the vendored SCI's `:watch`
+        ;; limitation above), where samples freely create their own local
+        ;; state via `(r/atom 0)`, the same way clojurebrasil.com.br does.
+        'reagent.core                   {'atom atom}
+        "package:flutter/material.dart" {'Text                       Text
+                                         'TextStyle                  TextStyle
+                                         'Column                     Column
+                                         'Row                        Row
+                                         'SizedBox                   SizedBox
+                                         'Container                  Container
+                                         'Padding                    Padding
+                                         'Image                      Image
+                                         'AssetImage                 AssetImage
+                                         'EdgeInsets.all             EdgeInsets.all
+                                         'EdgeInsets.symmetric       EdgeInsets.symmetric
+                                         'ElevatedButton             ElevatedButton
+                                         'TextButton                 TextButton
+                                         'OutlinedButton             OutlinedButton
+                                         'Checkbox                   Checkbox
+                                         'TextField                  TextField
+                                         'InputDecoration            InputDecoration
+                                         'OutlineInputBorder         OutlineInputBorder
+                                         'TextEditingController      TextEditingController
+                                         'Color                      Color
+                                         'TextAlign.center           m/TextAlign.center
+                                         'MainAxisSize.min           m/MainAxisSize.min
+                                         'CrossAxisAlignment.center  m/CrossAxisAlignment.center
+                                         'CrossAxisAlignment.stretch m/CrossAxisAlignment.stretch
+                                         'FontWeight.bold            m/FontWeight.bold
+                                         'FontWeight.w600            m/FontWeight.w600
+                                         'TextDecoration.lineThrough m/TextDecoration.lineThrough
+                                         'TextDecoration.underline   m/TextDecoration.underline
+                                         'Colors.black               m/Colors.black
+                                         'Colors.black54             m/Colors.black54
+                                         'Colors.blue                m/Colors.blue
+                                         'Colors.grey                m/Colors.grey
+                                         'Colors.red                 m/Colors.red}
+        'cljd.flutter                   {'widget (with-meta
+                                                   (fn [_&form _&env & clauses]
+                                                     (expand-widget-clauses watch-fn clauses))
+                                                   {:macro true})}}})))
+
+(defn load-sample-io!
+  [{:keys [state
+           controller]
+    :as   ctx}
+   {:keys [mode sample]}]
+  (let [source (source-for sample mode)]
+    (swap! state
+      assoc
+      :active-mode mode
+      :active-sample sample)
+    (set! (.-text ^w/TextEditingController controller) source)
+    (eval-active-source-io! ctx source)))
+
+(defn select-mode-io! [{:keys [state] :as ctx} mode]
+  (load-sample-io! ctx
+    {:mode   mode
+     :sample (:active-sample @state)}))
+
+(defn select-sample-io!
+  [{:keys [state]
+    :as   ctx}
+   sample]
+  (load-sample-io! ctx
+    {:mode   (:active-mode @state)
+     :sample sample}))
+
+(defn mode-button-ui
+  [{:keys [state]
+    :as   ctx}
+   {:keys [label
+           mode]}]
+  (let [active? (= mode (:active-mode @state))]
+    (m/TextButton
+      .onPressed (fn []
+                   (select-mode-io! ctx mode))
+      .child (m/Text label
+               .style (m/TextStyle
+                        .fontWeight (if active?
+                                      m/FontWeight.bold
+                                      m/FontWeight.normal)
+                        .decoration (when active?
+                                      m/TextDecoration.underline))))))
+
+(defn sample-button-ui
+  [{:keys [state]
+    :as   ctx}
+   {:keys [sample]}]
+  (let [active? (= sample (:active-sample @state))
+        label (get-in samples [sample :label])]
+    (m/TextButton
+      .onPressed (fn [] (select-sample-io! ctx sample))
+      .child (m/Text label
+               .style (m/TextStyle
+                        .fontWeight (if active?
+                                      m/FontWeight.bold
+                                      m/FontWeight.normal)
+                        .decoration (when active?
+                                      m/TextDecoration.underline))))))
+
+(defn runtime-editor-ui
+  [{:keys [controller]
+    :as   ctx}]
+  (m/Column
+    .mainAxisSize m/MainAxisSize.min
+    .crossAxisAlignment m/CrossAxisAlignment.stretch
+    .children
+    [(m/Wrap
+       .alignment m/WrapAlignment.center
+       .spacing 12.0
+       .runSpacing 4.0
+       .children
+       [(mode-button-ui ctx
+          {:label "Hiccup/Reagent"
+           :mode  :hiccup})
+        (mode-button-ui ctx
+          {:label "ClojureDart widget"
+           :mode  :cljd})])
+     (m/Wrap
+       .alignment m/WrapAlignment.center
+       .spacing 12.0
+       .runSpacing 4.0
+       .children
+       (vec (for [sample sample-order]
+              (sample-button-ui ctx
+                {:sample sample}))))
+     (m/SizedBox .height 10.0)
+     (m/TextField
+       .controller controller
+       .minLines 10
+       .maxLines 16
+       .onChanged (fn [source] (eval-active-source-io! ctx source))
+       .style (m/TextStyle .fontFamily "monospace"
+                .fontSize 13.0)
+       .decoration
+       (m/InputDecoration
+         .border (m/OutlineInputBorder)
+         .contentPadding (m/EdgeInsets.all 8.0)))]))
+
+(defn page-content-ui
+  "The logo+title header is shown once here, above whichever rendering mode
+   is active, instead of being baked into the Site sample's own content --
+   matching clojurebrasil.com.br's layout, where the header is static and
+   only the playground area below it swaps between samples."
+  [{:keys [state] :as ctx}
+   {:keys [result]}]
+  (m/Column
+    .mainAxisSize m/MainAxisSize.min
+    .children
+    [(m/Image .image (m/AssetImage (:logo site-model)) .height 112.0)
+     (m/SizedBox .height 12.0)
+     (m/Text (:title site-model)
+       .textAlign m/TextAlign.center
+       .style (m/TextStyle .fontSize 34.0
+                .fontWeight m/FontWeight.bold
+                .color m/Colors.black))
+     (m/SizedBox .height 20.0)
+     (if (= :hiccup (:active-mode @state))
+       (m/SizedBox .height (or (:playground-height @state) min-playground-height)
+         .child (m/HtmlElementView .viewType playground-view-type))
+       (result-widget result))
+     (m/SizedBox .height 12.0)
+     (m/Text "Comece a aprender agora mesmo!"
+       .textAlign m/TextAlign.center
+       .style (m/TextStyle .fontSize 14.0 .color m/Colors.black54))
+     (m/SizedBox .height 12.0)
+     (runtime-editor-ui ctx)]))
+
+(defn page-ui
+  [ctx
+   data]
+  (m/MaterialApp
+    .title "Clojure Brasil"
+    .theme (m/ThemeData .useMaterial3 true
+             .scaffoldBackgroundColor m/Colors.white
+             .colorScheme (m/ColorScheme.fromSeed
+                            .seedColor (m/Color 0xFF1793D1)))
+    .home
+    (m/Scaffold
+      .body
+      (m/SafeArea
+        .child
+        (m/SingleChildScrollView
+          .padding (m/EdgeInsets.symmetric
+                     .horizontal 18.0
+                     .vertical 24.0)
+          .child
+          (m/Center
+            .child
+            (m/ConstrainedBox
+              .constraints (m/BoxConstraints .maxWidth 608.0)
+              .child (page-content-ui ctx data))))))))
+
+(defn main []
+  (register-playground-view!)
+  (let [sci (build-sci-env)
+        initial-source (source-for :site :hiccup)
+        ctx {:sci        sci
+             :controller (m/TextEditingController .text initial-source)
+             :state      (atom {:active-mode   :hiccup
+                                :active-sample :site
+                                :result        nil})}
+        _ (eval-active-source-io! ctx initial-source)
+        _ (watch-playground-height-io! ctx)]
+    (f/run
+      (f/widget
+        :watch [state (:state ctx)]
+        (page-ui ctx {:result (:result state)})))))
