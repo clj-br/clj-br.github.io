@@ -49,7 +49,9 @@
   {:title    "Clojure Brasil"
    :subtitle "Comunidade brasileira de Clojure"
    :logo     "resources/logo.png"
-   :links    [{:title "Grupo no Telegram"
+   :links    [{:titulo "Grupo no Clojurians"
+               :href   "https://join.slack.com/t/clojurians/shared_invite/zt-zjqnhvdj-HSQGSyA79T5qdMb9GwqD1A"}
+              {:title "Grupo no Telegram"
                :href  "https://t.me/clojurebrasil"}
               {:title "Servidor do Discord"
                :href  "https://discord.gg/UTxeA9tHnd"}
