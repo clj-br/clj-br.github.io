@@ -31,8 +31,99 @@
 
   <title>Clojure Brasil</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Same rules clojurebrasil.com.br applies globally to <body>, scoped to
+       our embedded playground container instead so Reagent-rendered content
+       (centered text, bare <ul>s) matches the real site's look. -->
+  <style>
+    #cljbr-playground {
+      text-align: center;
+    }
+    #cljbr-playground ul {
+      padding: 0;
+      list-style-type: none;
+    }
+    #cljbr-playground li {
+      padding: 1em;
+    }
+  </style>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- Real Scittle + Reagent + React runtime, embedded so the Hiccup/Reagent
+       tab in the ClojureDart REPL behaves identically to clojurebrasil.com.br
+       (which runs on this exact stack), instead of emulating it. -->
+  <textarea id="cljbr-editor" style="display:none"></textarea>
+  <pre id="cljbr-stderr" style="display:none"></pre>
+  <script src="https://cdn.jsdelivr.net/npm/scittle@0.6.22/dist/scittle.js" type="application/javascript"></script>
+  <script crossorigin="true" src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script crossorigin="true" src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/scittle@0.6.22/dist/scittle.reagent.js" type="application/javascript"></script>
+  <script type="application/x-scittle">
+    (require '[reagent.core :as r]
+             '[reagent.dom :as rdom])
+    (defn render []
+      (let [stderr (.getElementById js/document "cljbr-stderr")
+            editor (.getElementById js/document "cljbr-editor")
+            ;; Flutter creates a fresh <div id="cljbr-playground"> per
+            ;; HtmlElementView instance (see register-playground-view! in
+            ;; app.cljd), since the old element gets detached whenever the
+            ;; Hiccup/Reagent tab is unmounted and remounted -- so we always
+            ;; look this up fresh rather than caching it.
+            target (.getElementById js/document "cljbr-playground")]
+        (when (and target (-> editor .-dataset .-state #{"idle"}))
+          (set! (-> editor .-dataset .-state) "loading")
+          (try
+            (let [component (-> js/window .-scittle .-core (.eval_string (.-value editor)))]
+              (rdom/render (cond
+                             (fn? component) [component]
+                             (var? component) [component]
+                             (vector? component) component
+                             :else [:pre (pr-str component)])
+                target)
+              (set! (.-innerText stderr) ""))
+            (catch :default ex
+              (set! (.-innerText stderr) (str (ex-message ex) "\n" (str (ex-data ex))))))
+          (set! (-> editor .-dataset .-state) "done")))
+      (js/setTimeout render 200))
+    (render)
+  </script>
+  <script>
+    (function () {
+      function loadFlutter() {
+        var script = document.createElement("script");
+        script.src = "flutter_bootstrap.js?v=" + Date.now();
+        script.async = true;
+        document.body.appendChild(script);
+      }
+
+      async function clearOldFlutterState() {
+        if ("serviceWorker" in navigator) {
+          var registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map(function (registration) {
+            return registration.unregister();
+          }));
+        }
+
+        if ("caches" in window) {
+          var cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(function (cacheName) {
+            return caches.delete(cacheName);
+          }));
+        }
+      }
+
+      function start() {
+        clearOldFlutterState().catch(function (error) {
+          console.warn("Failed to clear old Flutter cache state:", error);
+        }).finally(loadFlutter);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start, {once: true});
+      } else {
+        start();
+      }
+    }());
+  </script>
 </body>
 </html>

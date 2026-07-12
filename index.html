@@ -33,6 +33,43 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    (function () {
+      function loadFlutter() {
+        var script = document.createElement("script");
+        script.src = "flutter_bootstrap.js?v=" + Date.now();
+        script.async = true;
+        document.body.appendChild(script);
+      }
+
+      async function clearOldFlutterState() {
+        if ("serviceWorker" in navigator) {
+          var registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map(function (registration) {
+            return registration.unregister();
+          }));
+        }
+
+        if ("caches" in window) {
+          var cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(function (cacheName) {
+            return caches.delete(cacheName);
+          }));
+        }
+      }
+
+      function start() {
+        clearOldFlutterState().catch(function (error) {
+          console.warn("Failed to clear old Flutter cache state:", error);
+        }).finally(loadFlutter);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start, {once: true});
+      } else {
+        start();
+      }
+    }());
+  </script>
 </body>
 </html>

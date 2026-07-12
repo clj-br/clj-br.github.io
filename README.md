@@ -56,36 +56,37 @@ Para atualizar o que o GitHub Pages serve na raiz do repositorio:
 mise run github-pages-build
 ```
 
-Esse comando compila `src/repl/app.cljd`, executa `flutter build web
---base-href /` e copia `build/web/` para a raiz. Depois disso, commit os
-arquivos alterados/gerados da raiz.
+Esse comando compila `src/clj_br/website.cljd`, executa `flutter build web
+--base-href /` e copia `build/web/` para a raiz. Os arquivos gerados na
+raiz (`index.html`, `main.dart.js`, `assets/`, `canvaskit/`, `icons/`,
+etc.) sao ignorados pelo git no dia a dia -- fonte da verdade e `web/` +
+`src/`. Para efetivamente publicar, adicione-os manualmente ignorando o
+`.gitignore` antes do commit:
+
+```shell
+git add -f index.html main.dart.js flutter.js flutter_bootstrap.js \
+  flutter_service_worker.js manifest.json version.json favicon.png \
+  assets canvaskit icons
+```
 
 ## Estrutura
 
-- `src/repl/app.cljd`: codigo-fonte principal do app Flutter web.
+- `src/clj_br/website.cljd`: codigo-fonte principal do app Flutter web
+  (unica fonte do site -- substitui o antigo gerador Pedestal).
 - `web/`: configuracao de entrada do Flutter web.
 - `index.html`, `main.dart.js`, `assets/`, `canvaskit/`, `icons/`:
-  build estatico publicado pelo GitHub Pages.
+  build estatico publicado pelo GitHub Pages (gerado, gitignored).
 - `scripts/publish_flutter_to_pages.sh`: script usado por
   `mise run github-pages-build`.
-- `src/clj_br/website.clj`: gerador estatico antigo, mantido por enquanto.
 
 O app segue o exemplo `babashka/sci/examples/cljd-flutter-repl`: um
-editor dentro do app avalia codigo Clojure via SCI e mostra o resultado
-no painel de preview.
+editor dentro do app avalia codigo Clojure via SCI (para o modo
+ClojureDart widget) e o resultado aparece no painel de preview.
 
-Existem dois caminhos de renderizacao:
+Existem dois modos de renderizacao:
 
-- widgets Flutter criados diretamente por ClojureDart;
-- vetores Hiccup convertidos para HTML e exibidos por `flutter_html`.
-
-## Gerador antigo
-
-O antigo servidor Pedestal ainda pode ser iniciado com:
-
-```shell
-mise run static-site
-```
-
-Ele fica disponivel em `http://localhost:8080`, mas o caminho principal
-do site agora e o build Flutter web publicado na raiz.
+- **ClojureDart widget**: widgets Flutter criados diretamente por
+  ClojureDart, avaliados via SCI.
+- **Hiccup/Reagent**: roda o runtime real Scittle + Reagent + React
+  (o mesmo stack de clojurebrasil.com.br) embutido via `HtmlElementView`,
+  em vez de emular Reagent dentro do ClojureDart.

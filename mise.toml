@@ -6,17 +6,13 @@ flutter = "3.44.0-stable"
 description = "Start a Clojure REPL with the project deps."
 run = "clojure"
 
-[tasks.static-site]
-description = "Run the current Pedestal static-site generator/server."
-run = "clojure -M:run"
-
 [tasks.flutter-init]
 description = "Initialize generated Flutter/ClojureDart project files."
 run = "clojure -M:cljd init"
 
 [tasks.flutter-compile]
 description = "Compile the ClojureDart Flutter web app."
-run = "clojure -M:cljd compile repl.app"
+run = "clojure -M:cljd compile clj-br.website"
 
 [tasks.flutter-build-web]
 description = "Build the Flutter web app into build/web."
