@@ -8,35 +8,6 @@
     [cljd.flutter :as f]
     [sci.core :as sci]))
 
-(def counter-cljd-state
-  "A host-created (real ClojureDart) atom, dedicated to the ClojureDart
-   widget mode's Counter sample. Atoms created *inside* the vendored SCI
-   sandbox (e.g. via `(state/atom 0)`) don't work correctly with
-   `f/widget`'s `:watch` in this ClojureDart-widget world -- only
-   host-created atoms passed in from the outside do. The real
-   Scittle+Reagent+React runtime used by the Hiccup/Reagent tab is a
-   separate JS interpreter and isn't affected by this; samples there can
-   freely create their own `(r/atom ...)`."
-  (atom 0))
-
-(def todo-cljd-state
-  (atom [{:text "Entrar no Telegram" :done true}
-         {:text "Participar do Discord" :done false}
-         {:text "Assistir o canal" :done false}]))
-
-(def todo-cljd-draft
-  (atom ""))
-
-(def todo-cljd-draft-controller
-  (m/TextEditingController))
-
-(defn add-todo-cljd-io! []
-  (let [text @todo-cljd-draft]
-    (when (seq text)
-      (swap! todo-cljd-state conj {:text text :done false})
-      (reset! todo-cljd-draft "")
-      (set! (.-text ^m/TextEditingController todo-cljd-draft-controller) ""))))
-
 (defn callback [{:keys [handler pass-value?]}]
   (when handler
     (if pass-value?
@@ -164,10 +135,7 @@
 ")
 
 (def site-cljd-source
-  "(require '[\"package:flutter/material.dart\" :as m]
-         '[clj-br.site :as site])
-
-(def links
+  "(def links
   [{:title \"Grupo no Telegram\" :href \"https://t.me/clojurebrasil\"}
    {:title \"Servidor do Discord\" :href \"https://discord.gg/UTxeA9tHnd\"}
    {:title \"Canal no YouTube\" :href \"https://www.youtube.com/@clojure-br\"}
@@ -176,21 +144,21 @@
    {:title \"Vagas e oportunidades\" :href \"https://github.com/clj-br/vagas\"}])
 
 (defn link-view [{:keys [title href]}]
-  (m/Padding
-   .padding (m/EdgeInsets.symmetric .vertical 8.0)
+  (Padding
+   .padding (EdgeInsets.symmetric .vertical 8.0)
    .child
-   (m/GestureDetector
-    .onTap (fn [] (site/open-url! href))
+   (GestureDetector
+    .onTap (fn [] (open-url! href))
     .child
-    (m/Text title
-            .textAlign m/TextAlign.center
-            .style (m/TextStyle .fontSize 16.0
-                    .color m/Colors.blue
-                    .decoration m/TextDecoration.underline)))))
+    (Text title
+          .textAlign TextAlign.center
+          .style (TextStyle .fontSize 16.0
+                  .color Colors.blue
+                  .decoration TextDecoration.underline)))))
 
-(m/Column
- .mainAxisSize m/MainAxisSize.min
- .crossAxisAlignment m/CrossAxisAlignment.center
+(Column
+ .mainAxisSize MainAxisSize.min
+ .crossAxisAlignment CrossAxisAlignment.center
  .children (vec (map link-view links)))
 ")
 
@@ -206,23 +174,21 @@
 ")
 
 (def counter-cljd-source
-  "(require '[\"package:flutter/material.dart\" :as m]
-         '[cljd.flutter :as f]
-         '[clj-br.state :as state])
+  "(def counter (atom 0))
 
-(f/widget
- :watch [value state/counter]
- (m/Column
-   .mainAxisSize m/MainAxisSize.min
-   .crossAxisAlignment m/CrossAxisAlignment.center
+(widget
+ :watch [value counter]
+ (Column
+   .mainAxisSize MainAxisSize.min
+   .crossAxisAlignment CrossAxisAlignment.center
    .children
-   [(m/Text (str \"Contador: \" value)
-            .textAlign m/TextAlign.center
-            .style (m/TextStyle .fontSize 16.0 .color m/Colors.black))
-    (m/SizedBox .height 8.0)
-    (m/OutlinedButton
-     .onPressed (fn [] (swap! state/counter inc))
-     .child (m/Text \"incrementar\"))]))
+   [(Text (str \"Contador: \" value)
+          .textAlign TextAlign.center
+          .style (TextStyle .fontSize 16.0 .color Colors.black))
+    (SizedBox .height 8.0)
+    (OutlinedButton
+     .onPressed (fn [] (swap! counter inc))
+     .child (Text \"incrementar\"))]))
 ")
 
 (def todo-hiccup-source
@@ -255,53 +221,64 @@
  ")
 
 (def todo-cljd-source
-  "(require '[\"package:flutter/material.dart\" :as m]
-         '[cljd.flutter :as f]
-         '[clj-br.state :as state])
+  "(def todos
+  (atom [{:text \"Entrar no Telegram\" :done true}
+         {:text \"Participar do Discord\" :done false}
+         {:text \"Assistir o canal\" :done false}]))
+
+(def draft (atom \"\"))
+(def draft-controller (TextEditingController))
+
+(defn add-todo! []
+  (let [text @draft]
+    (when (seq text)
+      (swap! todos conj {:text text :done false})
+      (reset! draft \"\")
+      (set! (.-text draft-controller) \"\"))))
 
 (defn todo-row [idx {:keys [text done]}]
-  (m/Row
-   .mainAxisSize m/MainAxisSize.min
+  (Row
+   .mainAxisSize MainAxisSize.min
    .children
-   [(m/Checkbox
+   [(Checkbox
      .value done
-     .onChanged (fn [_] (swap! state/todos update-in [idx :done] not)))
-    (m/Text text
-     .style (m/TextStyle
-             .decoration (when done m/TextDecoration.lineThrough)
-             .color (if done m/Colors.grey m/Colors.black)))]))
+     .onChanged (fn [_] (swap! todos update-in [idx :done] not)))
+    (Text text
+     .style (TextStyle
+             .decoration (when done TextDecoration.lineThrough)
+             .color (if done Colors.grey Colors.black)))]))
 
-(f/widget
- :watch [todos state/todos
-         draft state/draft]
- (m/Column
-  .mainAxisSize m/MainAxisSize.min
-  .crossAxisAlignment m/CrossAxisAlignment.center
+(widget
+ :watch [todos-value todos
+         draft-value draft]
+ (Column
+  .mainAxisSize MainAxisSize.min
+  .crossAxisAlignment CrossAxisAlignment.center
   .children
   (vec
    (concat
-    [(m/SizedBox .height 8.0)]
-    (map-indexed todo-row todos)
-    [(m/SizedBox .height 8.0)
-     (m/Row
-      .mainAxisSize m/MainAxisSize.min
+    [(SizedBox .height 8.0)]
+    (map-indexed todo-row todos-value)
+    [(SizedBox .height 8.0)
+     (Row
+      .mainAxisSize MainAxisSize.min
       .children
-      [(m/SizedBox
+      [(SizedBox
         .width 220.0
         .child
-        (m/TextField
-         .controller state/draft-controller
-         .onChanged (fn [text] (reset! state/draft text))
-         .onSubmitted (fn [_] (state/add-todo!))
+        (TextField
+         .controller draft-controller
+         .onChanged (fn [text] (reset! draft text))
+         .onSubmitted (fn [_] (add-todo!))
          .decoration
-         (m/InputDecoration
+         (InputDecoration
           .isDense true
-          .border (m/OutlineInputBorder)
-          .contentPadding (m/EdgeInsets.symmetric .horizontal 10.0 .vertical 8.0))))
-       (m/SizedBox .width 6.0)
-       (m/OutlinedButton
-        .onPressed (fn [] (state/add-todo!))
-        .child (m/Text \"+\"))])]))))
+          .border (OutlineInputBorder)
+          .contentPadding (EdgeInsets.symmetric .horizontal 10.0 .vertical 8.0))))
+       (SizedBox .width 6.0)
+       (OutlinedButton
+        .onPressed (fn [] (add-todo!))
+        .child (Text \"+\"))])]))))
 ")
 
 (def samples
@@ -486,28 +463,17 @@
         watch-fn (fn [a render] (f/widget :watch [_ a] (value-widget (render @a))))]
     (sci/init
       {:namespaces
-       {'clj-br.site                    {'model     site-model
-                                         'view      community-site-widget
-                                         'html      community-hiccup-widget
-                                         'flutter   community-flutter-widget
-                                         'open-url! (fn [href] (open-url-io! href))}
-        ;; Host-created atoms, one dedicated set per ClojureDart-widget
-        ;; sample (not shared across samples) -- atoms created *inside* the
-        ;; sandbox don't work correctly with `f/widget`'s `:watch` here, so
-        ;; each sample's state is instead created in host code and just
-        ;; exposed in. See `counter-cljd-state`'s docstring for why.
-        'clj-br.state                   {'counter               counter-cljd-state
-                                         'todos                 todo-cljd-state
-                                         'draft                 todo-cljd-draft
-                                         'draft-controller      todo-cljd-draft-controller
-                                         'add-todo!             (fn [] (add-todo-cljd-io!))}
-        ;; `atom` here is the real host (ClojureDart) atom constructor. It's
-        ;; only exposed to the real Scittle+Reagent+React runtime (a separate
-        ;; JS interpreter, not affected by the vendored SCI's `:watch`
-        ;; limitation above), where samples freely create their own local
-        ;; state via `(r/atom 0)`, the same way clojurebrasil.com.br does.
-        'reagent.core                   {'atom atom}
-        "package:flutter/material.dart" {'Text                       Text
+       {;; The page is a root REPL: samples can define their own state and use
+        ;; the supported Flutter surface without adding requires or aliases.
+        ;; This is the host atom constructor because `f/widget` must watch a
+        ;; real ClojureDart atom rather than SCI's internal atom type.
+        'user                           {'atom                       atom
+                                         'open-url!                  (fn [href] (open-url-io! href))
+                                         'widget                     (with-meta
+                                                                       (fn [_&form _&env & clauses]
+                                                                         (expand-widget-clauses watch-fn clauses))
+                                                                       {:macro true})
+                                         'Text                       Text
                                          'TextStyle                  TextStyle
                                          'Column                     Column
                                          'Row                        Row
@@ -540,11 +506,7 @@
                                          'Colors.black54             m/Colors.black54
                                          'Colors.blue                m/Colors.blue
                                          'Colors.grey                m/Colors.grey
-                                         'Colors.red                 m/Colors.red}
-        'cljd.flutter                   {'widget (with-meta
-                                                   (fn [_&form _&env & clauses]
-                                                     (expand-widget-clauses watch-fn clauses))
-                                                   {:macro true})}}})))
+                                         'Colors.red                 m/Colors.red}}})))
 
 (defn load-sample-io!
   [{:keys [state
