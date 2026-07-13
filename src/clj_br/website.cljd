@@ -135,7 +135,10 @@
 ")
 
 (def site-cljd-source
-  "(def links
+  "(defn open-url! [href]
+  (window-open! href))
+
+(def links
   [{:title \"Grupo no Telegram\" :href \"https://t.me/clojurebrasil\"}
    {:title \"Servidor do Discord\" :href \"https://discord.gg/UTxeA9tHnd\"}
    {:title \"Canal no YouTube\" :href \"https://www.youtube.com/@clojure-br\"}
@@ -234,7 +237,7 @@
     (when (seq text)
       (swap! todos conj {:text text :done false})
       (reset! draft \"\")
-      (set! (.-text draft-controller) \"\"))))
+      (set-text! draft-controller \"\"))))
 
 (defn todo-row [idx {:keys [text done]}]
   (Row
@@ -468,7 +471,9 @@
         ;; This is the host atom constructor because `f/widget` must watch a
         ;; real ClojureDart atom rather than SCI's internal atom type.
         'user                           {'atom                       atom
-                                         'open-url!                  (fn [href] (open-url-io! href))
+                                         'window-open!               (fn [href] (open-url-io! href))
+                                         'set-text!                  (fn [^m/TextEditingController controller text]
+                                                                       (set! (.-text controller) text))
                                          'widget                     (with-meta
                                                                        (fn [_&form _&env & clauses]
                                                                          (expand-widget-clauses watch-fn clauses))

@@ -53,7 +53,7 @@ app.*.map.json
 /macos/
 /linux/
 /windows/
-/test/
+/test/widget_test.dart
 /.metadata
 /pubspec.lock
 /.gitattributes
