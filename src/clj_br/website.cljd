@@ -102,15 +102,21 @@
 (defn community-hiccup-widget [model]
   (community-site-widget model))
 
-(defn flutter-link [{:keys [title]}]
+(defn open-url-io! [href]
+  (.open dom/window href "_blank"))
+
+(defn flutter-link [{:keys [title href]}]
   (m/Padding
     .padding (m/EdgeInsets.symmetric .vertical 8.0)
     .child
-    (m/Text title
-      .textAlign m/TextAlign.center
-      .style (m/TextStyle .fontSize 16.0
-               .color m/Colors.blue
-               .decoration m/TextDecoration.underline))))
+    (m/GestureDetector
+      .onTap (fn [] (open-url-io! href))
+      .child
+      (m/Text title
+        .textAlign m/TextAlign.center
+        .style (m/TextStyle .fontSize 16.0
+                 .color m/Colors.blue
+                 .decoration m/TextDecoration.underline)))))
 
 (defn community-flutter-widget
   "A native ClojureDart Flutter component for the same site model."
@@ -158,7 +164,8 @@
 ")
 
 (def site-cljd-source
-  "(require '[\"package:flutter/material.dart\" :as m])
+  "(require '[\"package:flutter/material.dart\" :as m]
+         '[clj-br.site :as site])
 
 (def links
   [{:title \"Grupo no Telegram\" :href \"https://t.me/clojurebrasil\"}
@@ -168,15 +175,18 @@
    {:title \"Duvidas e discussoes\" :href \"https://github.com/clj-br/forum/discussions\"}
    {:title \"Vagas e oportunidades\" :href \"https://github.com/clj-br/vagas\"}])
 
-(defn link-view [{:keys [title]}]
+(defn link-view [{:keys [title href]}]
   (m/Padding
    .padding (m/EdgeInsets.symmetric .vertical 8.0)
    .child
-   (m/Text title
-           .textAlign m/TextAlign.center
-           .style (m/TextStyle .fontSize 16.0
-                   .color m/Colors.blue
-                   .decoration m/TextDecoration.underline))))
+   (m/GestureDetector
+    .onTap (fn [] (site/open-url! href))
+    .child
+    (m/Text title
+            .textAlign m/TextAlign.center
+            .style (m/TextStyle .fontSize 16.0
+                    .color m/Colors.blue
+                    .decoration m/TextDecoration.underline)))))
 
 (m/Column
  .mainAxisSize m/MainAxisSize.min
@@ -469,13 +479,18 @@
         OutlineInputBorder (fn [] (m/OutlineInputBorder))
         TextEditingController (fn [] (m/TextEditingController))
         Color (fn [value] (m/Color value))
+        GestureDetector (fn [& {:keys [onTap child]}]
+                          (m/GestureDetector
+                            .onTap (callback {:handler onTap})
+                            .child child))
         watch-fn (fn [a render] (f/widget :watch [_ a] (value-widget (render @a))))]
     (sci/init
       {:namespaces
-       {'clj-br.site                    {'model   site-model
-                                         'view    community-site-widget
-                                         'html    community-hiccup-widget
-                                         'flutter community-flutter-widget}
+       {'clj-br.site                    {'model     site-model
+                                         'view      community-site-widget
+                                         'html      community-hiccup-widget
+                                         'flutter   community-flutter-widget
+                                         'open-url! (fn [href] (open-url-io! href))}
         ;; Host-created atoms, one dedicated set per ClojureDart-widget
         ;; sample (not shared across samples) -- atoms created *inside* the
         ;; sandbox don't work correctly with `f/widget`'s `:watch` here, so
@@ -512,6 +527,7 @@
                                          'OutlineInputBorder         OutlineInputBorder
                                          'TextEditingController      TextEditingController
                                          'Color                      Color
+                                         'GestureDetector            GestureDetector
                                          'TextAlign.center           m/TextAlign.center
                                          'MainAxisSize.min           m/MainAxisSize.min
                                          'CrossAxisAlignment.center  m/CrossAxisAlignment.center
